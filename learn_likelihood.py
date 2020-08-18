@@ -42,18 +42,20 @@ from torch_prior import Prior
 np.random.seed(1234)
 
 # default parameter values
-_NUM_SIMS = 1048576
-_HIDDEN_FEATURES = 128
-_TRANSFORM_LAYERS = 8
-_SIM_BATCH_SIZE = 1024
-_TRAINING_BATCH_SIZE = 1024
+_NUM_SIMS = 1000
+_DENSITY_ESTIMATOR = 'maf'
+_HIDDEN_FEATURES = 50
+_TRANSFORM_LAYERS = 5
+_SIM_BATCH_SIZE = 1
+_TRAINING_BATCH_SIZE = 50
 _RMIN = 3.0
 _RMAX = 15.0
 _RREF = 8.0
 _FIXED = {}
 _OVERWRITE = False
 
-def main(outfile, priors, grmfile, num_sims=_NUM_SIMS,
+def main(outfile, priors, num_sims=_NUM_SIMS,
+         density_estimator=_DENSITY_ESTIMATOR,
          hidden_features=_HIDDEN_FEATURES,
          transform_layers=_TRANSFORM_LAYERS,
          sim_batch_size=_SIM_BATCH_SIZE,
@@ -80,8 +82,9 @@ def main(outfile, priors, grmfile, num_sims=_NUM_SIMS,
           ['halfcauchy', scale]
           ['uniform', lower, upper]
           ['fixed', value]
-      grmfile :: string
-        File containing GRM KDEs
+      density_estimator :: string
+        Density estimator for neural network. Either 'maf' for
+        Masked Autoregressive Flow or 'nsf' for Neural Spline Flow
       num_sims :: integer
         Number of simulations
       hidden_features :: integer
@@ -107,20 +110,6 @@ def main(outfile, priors, grmfile, num_sims=_NUM_SIMS,
     if os.path.exists(outfile) and not overwrite:
         raise ValueError("{0} already exists!".format(outfile))
     #
-    # Get GRM KDEs
-    #
-    print("Reading GRM data from {0}".format(grmfile))
-    with open(grmfile, 'rb') as f:
-        grm_kdes = pickle.load(f)
-    grm_kde_params = [key for key in grm_kdes.keys() if key != 'full']
-    # approximate GRM KDEs as Gaussians
-    grm_samples = grm_kdes['full'].resample(10000)
-    grm_mus = np.mean(grm_samples, axis=1)
-    grm_cov = np.cov(grm_samples, rowvar=1)
-    grm_std = np.sqrt(np.diag(grm_cov))
-    for param, mu, std in zip(grm_kde_params, grm_mus, grm_std):
-        priors[param] = ['normal', mu, std]
-    #
     # Initialize priors and simulator
     #
     print("Using priors:")
@@ -138,11 +127,18 @@ def main(outfile, priors, grmfile, num_sims=_NUM_SIMS,
     #
     # Learn likelihood
     #
-    print("Learning likelihood with Neural Spline Flow density estimator,")
+    de = None
+    if density_estimator == 'nsf':
+        de = 'Neural Spline Flow'
+    elif density_estimator == 'maf':
+        de = 'Masked Autoregressive Flow'
+    else:
+        raise ValueError("Invalid density estimator: {0}".format(density_estimator))
+    print("Learning likelihood with {0} density estimator,".format(de))
     print("{0} hidden features, and {1} transform layers.".format(
         hidden_features, transform_layers))
     density_estimator = likelihood_nn(
-        model='nsf', hidden_features=hidden_features,
+        model=density_estimator, hidden_features=hidden_features,
         num_transforms=transform_layers)
     inference = SNLE(
         sim, prior, density_estimator=density_estimator,
@@ -154,7 +150,7 @@ def main(outfile, priors, grmfile, num_sims=_NUM_SIMS,
     #
     # Save
     #
-    print("Saving results to {0}".format(outfile))
+    print("Pickling results to {0}".format(outfile))
     with open(outfile, 'wb') as f:
         output = {
             'posterior': posterior, 'priors': priors, 'fixed': fixed}
@@ -171,11 +167,11 @@ if __name__ == "__main__":
         "outfile", type=str,
         help="Where the neural network is stored (.pkl extension)")
     PARSER.add_argument(
-        "grmfile", type=str,
-        help="Where the GRM KDEs are stored (.pkl extension)")
-    PARSER.add_argument(
         "-n", "--nsims", type=int, default=_NUM_SIMS,
         help="Number of simulated observations")
+    PARSER.add_argument(
+        "--density_estimator", type=str, default=_DENSITY_ESTIMATOR,
+        help="Either maf (Masked Autoregressive Flow) or nsf (Neural Spline Flow)")
     PARSER.add_argument(
         "--features", type=int, default=_HIDDEN_FEATURES,
         help="Number of neural spine flow hidden features")
@@ -244,7 +240,8 @@ if __name__ == "__main__":
     FIXED = {}
     for FIX in range(len(ARGS['fixed'])//2):
         FIXED[ARGS['fixed'][2*FIX]] = float(ARGS['fixed'][2*FIX+1])
-    main(ARGS['outfile'], PRIORS, ARGS['grmfile'], num_sims=ARGS['nsims'],
+    main(ARGS['outfile'], PRIORS, num_sims=ARGS['nsims'],
+         density_estimator=ARGS['density_estimator'],
          hidden_features=ARGS['features'], transform_layers=ARGS['layers'],
          sim_batch_size=ARGS['sim_batch_size'],
          training_batch_size=ARGS['training_batch_size'],
