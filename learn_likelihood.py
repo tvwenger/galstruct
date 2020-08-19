@@ -184,7 +184,7 @@ def main(outfile, priors, num_sims=_NUM_SIMS,
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser(
         description="Train Neural Network for Spiral Model Likelihood",
-        prog="train_likelihood.py",
+        prog="learn_likelihood.py",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     PARSER.add_argument(

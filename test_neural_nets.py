@@ -26,6 +26,7 @@ Trey Wenger - August 2020
 import os
 import pickle
 import glob
+import argparse
 
 import torch
 import numpy as np
@@ -126,4 +127,13 @@ def main(netdir, num_data=1000, num_sims=100, Rmin=3.0, Rmax=15.0,
         print()
 
 if __name__ == "__main__":
-    main('nets')
+    PARSER = argparse.ArgumentParser(
+        description="Check likelihood neural nets against simulated and random data",
+        prog="test_neural_nets.py",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    PARSER.add_argument(
+        "--dir", type=str, default="nets",
+        help="Directory containing neural network pickles")
+    ARGS = vars(PARSER.parse_args())
+    main(ARGS['dir'])
