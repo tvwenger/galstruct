@@ -32,7 +32,7 @@ class Prior:
     probability and samples from the prior.
     """
     
-    def __init__(self, priors, num_spirals=4):
+    def __init__(self, priors):
         """
         Initialize a new Prior object.
 
