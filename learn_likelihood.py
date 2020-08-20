@@ -49,8 +49,6 @@ _HIDDEN_FEATURES = 50
 _TRANSFORM_LAYERS = 5
 _SIM_BATCH_SIZE = 1
 _TRAINING_BATCH_SIZE = 50
-_EMBEDDING_HIDDEN = 16
-_ENCODED_DIM = 8
 _RMIN = 3.0
 _RMAX = 15.0
 _RREF = 8.0
@@ -63,8 +61,6 @@ def main(outfile, priors, num_sims=_NUM_SIMS,
          transform_layers=_TRANSFORM_LAYERS,
          sim_batch_size=_SIM_BATCH_SIZE,
          training_batch_size=_TRAINING_BATCH_SIZE,
-         embedding_hidden=_EMBEDDING_HIDDEN,
-         encoded_dim=_ENCODED_DIM,
          Rmin=_RMIN, Rmax=_RMAX, Rref=_RREF,
          fixed=_FIXED, overwrite=_OVERWRITE):
     """
@@ -98,10 +94,6 @@ def main(outfile, priors, num_sims=_NUM_SIMS,
         Number of neural spline flow transform layers
       sim_batch_size, training_batch_size :: integers
         Batch sizes for simulations and training
-      embedding_hidden :: integer
-        Hidden features in parameter embedding network
-      encoded_dim :: integer
-        Output dimensions of embedding network
       Rmin, Rmax :: scalars (kpc)
         The minimum and maximum radii of the spirals
       Rref :: scalar (kpc)
@@ -134,18 +126,6 @@ def main(outfile, priors, num_sims=_NUM_SIMS,
         Rref=torch.tensor(Rref), fixed=fixed)
     sim, prior = prepare_for_sbi(sim, prior)
     #
-    # Embedding net
-    #
-    print("Encoding parameter space ({0} dim) using ".format(len(priors)))
-    print("{0} hidden features and {1} output dims.".format(embedding_hidden, encoded_dim))
-    param_dim = len(priors)
-    embedding_net = nn.Sequential(
-        nn.Linear(param_dim, embedding_hidden),
-        nn.ReLU(),
-        nn.Linear(embedding_hidden, embedding_hidden),
-        nn.ReLU(),
-        nn.Linear(embedding_hidden, encoded_dim))
-    #
     # Density estimator
     #
     de = None
@@ -160,7 +140,7 @@ def main(outfile, priors, num_sims=_NUM_SIMS,
         hidden_features, transform_layers))
     density_estimator = likelihood_nn(
         model=density_estimator, hidden_features=hidden_features,
-        num_transforms=transform_layers, embedding_net=embedding_net)
+        num_transforms=transform_layers)
     #
     # Inference
     #
@@ -208,12 +188,6 @@ if __name__ == "__main__":
     PARSER.add_argument(
         "--training_batch_size", type=int, default=_TRAINING_BATCH_SIZE,
         help="Batch size for training")
-    PARSER.add_argument(
-        "--embedding_hidden", type=int, default=_EMBEDDING_HIDDEN,
-        help="Hidden features in parameter embedding network")
-    PARSER.add_argument(
-        "--encoded_dim", type=int, default=_ENCODED_DIM,
-        help="Output dimensions of embedding network")
     PARSER.add_argument(
         "--Rmin", type=float, default=_RMIN,
         help="Minimum Galactocentric radius (kpc)")
@@ -275,7 +249,5 @@ if __name__ == "__main__":
          hidden_features=ARGS['features'], transform_layers=ARGS['layers'],
          sim_batch_size=ARGS['sim_batch_size'],
          training_batch_size=ARGS['training_batch_size'],
-         embedding_hidden=ARGS['embedding_hidden'],
-         encoded_dim=ARGS['encoded_dim'],
          Rmin=ARGS['Rmin'], Rmax=ARGS['Rmax'], Rref=ARGS['Rref'],
          fixed=FIXED, overwrite=ARGS['overwrite'])
