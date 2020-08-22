@@ -4,7 +4,8 @@
 plot_likelihoods.py
 
 Generate plots of simulated data, data sampled from the learned
-likelihood, and a grid of the learned likelihood.
+likelihood, a grid of the true likelihood, and a grid of the 
+learned likelihood.
 
 Copyright(C) 2020 by Trey Wenger <tvwenger@gmail.com>
 
@@ -30,6 +31,7 @@ import pickle
 from torch_prior import Prior
 import matplotlib.pyplot as plt
 from model.simulator import simulator
+from model.likelihood import log_like
 import numpy as np
 import torch
 
@@ -40,10 +42,10 @@ def main(net_fname, num_data=500, theta=_THETA, outdir='frames',
          Rmin=3.0, Rmax=15.0, Rref=8.0):
     """
     Generate plots of simulated data, data sampled from the learned
-    likelihood, and a grid of the learned likelihood for a given
-    set of parameters and varying reference azimuth. Each reference
-    azimuth frame is saved to outdir with prefix frame_*, and can be
-    combined into a gif with:
+    likelihood, a grid of the true likelihood, and a grid of the
+    learned likelihood for a given set of parameters and varying
+    reference azimuth. Each reference azimuth frame is saved to outdir
+    with prefix frame_*, and can be combined into a gif with:
     ffmpeg -v 0 -i frame_%03d.png -vf palettegen -y palette.png
     ffmpeg -v 0 -framerate 20 -loop 0 -i frame_%03d.png -i palette.png -lavfi paletteuse -y movie.gif
 
@@ -92,8 +94,10 @@ def main(net_fname, num_data=500, theta=_THETA, outdir='frames',
     # Loop over azimuth
     #
     for i, (az0_deg, az0) in enumerate(zip(az0s_deg, az0s)):
-        fig, (ax1, ax2, ax3) = plt.subplots(
-            1, 3, sharex=True, sharey=True, figsize=(16, 9))
+        fig, ax = plt.subplots(
+            1, 4, sharex=True, sharey=True, figsize=(16, 9))
+        fig.subplots_adjust(
+            left=0.075, right=0.99, bottom=0.225, top=0.95, wspace=0)
         theta[0] = az0
         #
         # Simulated data
@@ -103,45 +107,71 @@ def main(net_fname, num_data=500, theta=_THETA, outdir='frames',
             Rmin=torch.tensor(Rmin), Rmax=torch.tensor(Rmax),
             Rref=torch.tensor(Rref))
         data = data.numpy()
-        cax = ax1.scatter(
+        cax0 = ax[0].scatter(
             data[:, 2], np.rad2deg(data[:, 0]), marker='.',
             c=np.rad2deg(data[:, 1]), vmin=-5.0, vmax=5.0)
-        cbar = fig.colorbar(cax, ax=ax1, fraction=0.15, pad=0.04)
-        cbar.set_label('Latitude (deg)')
-        ax1.set_ylabel('Longitude (deg)')
-        ax1.set_xlabel('VLSR (km/s)')
-        ax1.set_xlim(-150.0, 150.0)
-        ax1.set_ylim(-180.0, 180.0)
+        ax[0].set_ylabel('Longitude (deg)')
+        ax[0].set_xlabel('VLSR (km/s)')
+        ax[0].set_title('Simulated')
+        ax[0].set_xlim(-150.0, 150.0)
+        ax[0].set_ylim(-180.0, 180.0)
+        label = r'$\theta_0 = '+'{0:.1f}'.format(az0_deg)+r'^\circ$'
+        props = {'boxstyle': 'round', 'facecolor': 'white', 'alpha': 0.5}
+        ax[0].text(-100, 150, label, fontsize=24, bbox=props)
         #
         # Sampled data
         #
         data = net['posterior'].net.sample(num_data, context=theta[None])[0]
         data = data.detach().numpy()
-        cax = ax2.scatter(
+        cax1 = ax[1].scatter(
             data[:, 2], np.rad2deg(data[:, 0]), marker='.',
             c=np.rad2deg(data[:, 1]), vmin=-5.0, vmax=5.0)
-        cbar = fig.colorbar(cax, ax=ax2, fraction=0.15, pad=0.04)
-        cbar.set_label('Latitude (deg)')
-        ax2.set_xlabel('VLSR (km/s)')
-        ax2.set_xlim(-150.0, 150.0)
-        ax2.set_ylim(-180.0, 180.0)
-        ax2.set_title('Azimuth = {0:.1f} deg'.format(az0_deg))
+        ax[1].set_xlabel('VLSR (km/s)')
+        ax[1].set_xlim(-150.0, 150.0)
+        ax[1].set_ylim(-180.0, 180.0)
+        ax[1].set_title('Sampled')
         #
-        # Grid data
+        # Grid true likelihood data
+        #
+        logp = log_like(
+            grid, theta, Rmin=torch.tensor(Rmin),
+            Rmax=torch.tensor(Rmax), Rref=torch.tensor(Rref),
+            az_bins=1000)
+        logp = logp.detach().numpy()
+        logp = logp.reshape(glong_grid.shape)
+        cax2 = ax[2].imshow(
+            logp-logp.max(), extent=extent, origin='lower',
+            interpolation='none', vmin=-20.0, vmax=0.0, aspect='auto')
+        ax[2].set_xlabel('VLSR (km/s)')
+        ax[2].set_xlim(-150.0, 150.0)
+        ax[2].set_ylim(-180.0, 180.0)
+        ax[2].set_title('True')
+        #
+        # Grid learned likelihood data
         #
         logp = net['posterior'].net.log_prob(
             grid, context=theta.expand(len(grid), -1))
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
-        cax = ax3.imshow(
-            logp, extent=extent, origin='lower', interpolation='none',
-            vmin=-20.0, vmax=1.0, aspect='auto')
-        cbar = fig.colorbar(cax, ax=ax3, fraction=0.15, pad=0.04)
-        cbar.set_label('log $L$ ($b = 0^\circ$)')
-        ax3.set_xlabel('VLSR (km/s)')
-        ax3.set_xlim(-150.0, 150.0)
-        ax3.set_ylim(-180.0, 180.0)
-        fig.tight_layout()
+        cax3 = ax[3].imshow(
+            logp-logp.max(), extent=extent, origin='lower',
+            interpolation='none', vmin=-20.0, vmax=0.0, aspect='auto')
+        ax[3].set_xlabel('VLSR (km/s)')
+        ax[3].set_xlim(-150.0, 150.0)
+        ax[3].set_ylim(-180.0, 180.0)
+        ax[3].set_title('Learned')
+        #
+        # Add colorbars
+        #
+        fig.canvas.draw_idle()
+        cbar_ax1 = fig.add_axes([0.075, 0.1, 0.45, 0.025])
+        plt.colorbar(
+            cax1, cax=cbar_ax1, orientation='horizontal',
+            label='Latitude (deg)')
+        cbar_ax2 = fig.add_axes([0.5375, 0.1, 0.45, 0.025])
+        plt.colorbar(
+            cax3, cax=cbar_ax2, orientation='horizontal',
+            label=r'log $L + C$ ($b = 0^\circ$)')
         fname = os.path.join(outdir, 'frame_{0:03d}.png'.format(i))
         fig.savefig(fname, dpi=100)
         plt.close(fig)
