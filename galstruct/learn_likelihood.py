@@ -175,7 +175,12 @@ def main(
     # Save
     print("Pickling results to {0}".format(outfile))
     with open(outfile, "wb") as f:
-        output = {"posterior": posterior, "priors": priors, "fixed": fixed}
+        output = {
+            "posterior": posterior,
+            "density_estimator": density_estimator,
+            "priors": priors,
+            "fixed": fixed,
+        }
         pickle.dump(output, f)
     print("Done!")
 
