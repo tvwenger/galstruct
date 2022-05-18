@@ -5,7 +5,7 @@ torch_prior.py
 
 Define a complicated prior object for use with pyTorch and SBI.
 
-Copyright(C) 2020 by Trey Wenger <tvwenger@gmail.com>
+Copyright(C) 2020-2022 by Trey Wenger <tvwenger@gmail.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,17 +21,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Trey Wenger - August 2020
+Trey Wenger - May 2022 - Formatting
 """
 
 import torch as tt
 import torch.distributions as dist
+
 
 class Prior:
     """
     Defines a Prior object, which returns the total log prior
     probability and samples from the prior.
     """
-    
+
     def __init__(self, priors):
         """
         Initialize a new Prior object.
@@ -56,30 +58,41 @@ class Prior:
         """
         self.priors = []
         param_names = [
-            'az0', 'pitch', 'sigmaV', 'sigma_arm_plane', 'sigma_arm_height',
-            'R0', 'Usun', 'Vsun', 'Wsun', 'Upec', 'Vpec', 'a2', 'a3',
-            'Zsun', 'roll', 'warp_amp', 'warp_off']
+            "az0",
+            "pitch",
+            "sigmaV",
+            "sigma_arm_plane",
+            "sigma_arm_height",
+            "R0",
+            "Usun",
+            "Vsun",
+            "Wsun",
+            "Upec",
+            "Vpec",
+            "a2",
+            "a3",
+            "Zsun",
+            "roll",
+            "warp_amp",
+            "warp_off",
+        ]
         for name in param_names:
             if name not in priors:
-                continue
-            if priors[name][0] == 'uniform':
-                self.priors.append(
-                    dist.Uniform(priors[name][1], priors[name][2]))
-            elif priors[name][0] == 'normal':
-                self.priors.append(
-                    dist.Normal(priors[name][1], priors[name][2]))
-            elif priors[name][0] == 'cauchy':
-                self.priors.append(
-                    dist.Cauchy(priors[name][1], priors[name][2]))
-            elif priors[name][0] == 'halfnormal':
-                self.priors.append(
-                    dist.HalfNormal(priors[name][1]))
-            elif priors[name][0] == 'halfcauchy':
-                self.priors.append(
-                    dist.HalfCauchy(priors[name][1]))
+                raise ValueError(f"Invalid parameter name {name}")
+            if priors[name][0] == "uniform":
+                self.priors.append(dist.Uniform(priors[name][1], priors[name][2]))
+            elif priors[name][0] == "normal":
+                self.priors.append(dist.Normal(priors[name][1], priors[name][2]))
+            elif priors[name][0] == "cauchy":
+                self.priors.append(dist.Cauchy(priors[name][1], priors[name][2]))
+            elif priors[name][0] == "halfnormal":
+                self.priors.append(dist.HalfNormal(priors[name][1]))
+            elif priors[name][0] == "halfcauchy":
+                self.priors.append(dist.HalfCauchy(priors[name][1]))
             else:
-                raise ValueError("Invalid prior type {0} for {1}".format(
-                    priors[name][0], name))
+                raise ValueError(
+                    "Invalid prior type {0} for {1}".format(priors[name][0], name)
+                )
 
     def sample(self, sample_shape=()):
         """
@@ -108,7 +121,7 @@ class Prior:
         Return the log probability of the priors evaluated at a given
         position.
 
-        Inputs: 
+        Inputs:
           value :: torch.tensor
             Parameter position(s)
 
@@ -119,7 +132,11 @@ class Prior:
         if value.ndim > 1:
             log_p = tt.empty(value.shape[0])
             for i, val in enumerate(value):
-                log_p[i] = tt.sum(tt.tensor([p.log_prob(v) for p, v in zip(self.priors, val)]))
+                log_p[i] = tt.sum(
+                    tt.tensor([p.log_prob(v) for p, v in zip(self.priors, val)])
+                )
         else:
-            log_p = tt.sum(tt.tensor([p.log_prob(v) for p, v in zip(self.priors, value)]))
+            log_p = tt.sum(
+                tt.tensor([p.log_prob(v) for p, v in zip(self.priors, value)])
+            )
         return log_p

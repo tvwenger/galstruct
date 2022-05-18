@@ -7,5 +7,5 @@ setup(
     author="Trey V. Wenger",
     author_email="tvwenger@gmail.com",
     packages=["galstruct"],
-    install_requires=["numpy", "torch", "matplotlib"],
+    install_requires=["numpy", "scipy", "torch", "matplotlib", "sbi"],
 )
