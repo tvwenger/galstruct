@@ -6,7 +6,7 @@ transforms.py
 Utility functions for converting positions and velocities between
 reference frames.
 
-Copyright(C) 2020 by Trey Wenger <tvwenger@gmail.com>
+Copyright(C) 2020-2022 by Trey Wenger <tvwenger@gmail.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Trey Wenger - August 2020
+Trey Wenger - May 2022 - Formatting
 """
 
 import torch as tt
@@ -30,6 +31,7 @@ import torch as tt
 _USTD = 10.27
 _VSTD = 15.32
 _WSTD = 7.74
+
 
 def gcencyl_to_gcencar(R, cos_az, sin_az):
     """
@@ -46,9 +48,10 @@ def gcencyl_to_gcencar(R, cos_az, sin_az):
       Xg, Yg :: scalars (kpc)
         Galactocentric Cartesian positions
     """
-    Xg = -R*cos_az
-    Yg = R*sin_az
+    Xg = -R * cos_az
+    Yg = R * sin_az
     return (Xg, Yg)
+
 
 def v_gcencyl_to_gcencar(vR, vAz, cos_az, sin_az):
     """
@@ -65,12 +68,12 @@ def v_gcencyl_to_gcencar(vR, vAz, cos_az, sin_az):
       vXg, vYg :: scalars (km/s)
         Galactocentric Cartesian velocities
     """
-    vXg = -vR*cos_az + sin_az*vAz
-    vYg = vR*sin_az + cos_az*vAz
+    vXg = -vR * cos_az + sin_az * vAz
+    vYg = vR * sin_az + cos_az * vAz
     return vXg, vYg
 
-def gcencar_to_barycar(Xg, Yg, Zg, R0, cos_tilt, sin_tilt, cos_roll,
-                       sin_roll):
+
+def gcencar_to_barycar(Xg, Yg, Zg, R0, cos_tilt, sin_tilt, cos_roll, sin_roll):
     """
     Convert Galactocentric Cartesian positions to the barycentric
     Cartesian frame.
@@ -87,14 +90,16 @@ def gcencar_to_barycar(Xg, Yg, Zg, R0, cos_tilt, sin_tilt, cos_roll,
       Xb, Yb, Zb :: scalars (kpc)
         Barycentric Cartesian position
     """
-    Xb = Xg*cos_tilt - Zg*sin_tilt + R0
-    Zb = Xg*sin_tilt + Zg*cos_tilt
-    Yb = Yg*cos_roll + Zb*sin_roll
-    Zb = -Yg*sin_roll + Zb*cos_roll
+    Xb = Xg * cos_tilt - Zg * sin_tilt + R0
+    Zb = Xg * sin_tilt + Zg * cos_tilt
+    Yb = Yg * cos_roll + Zb * sin_roll
+    Zb = -Yg * sin_roll + Zb * cos_roll
     return (Xb, Yb, Zb)
 
-def v_gcencar_to_barycar(vXg, vYg, Usun, Vsun, Wsun, theta0,
-                         cos_tilt, sin_tilt, cos_roll, sin_roll):
+
+def v_gcencar_to_barycar(
+    vXg, vYg, Usun, Vsun, Wsun, theta0, cos_tilt, sin_tilt, cos_roll, sin_roll
+):
     """
     Convert Galactocentric Cartesian velocities to the barycentric
     Cartesian frame.
@@ -118,11 +123,12 @@ def v_gcencar_to_barycar(vXg, vYg, Usun, Vsun, Wsun, theta0,
     vXg = vXg - Usun
     vYg = vYg - (Vsun + theta0)
     vZg = -Wsun
-    vXb = vXg*cos_tilt - vZg*sin_tilt;
-    vZb = vXg*sin_tilt + vZg*cos_tilt;
-    vYb = vYg*cos_roll + vZb*sin_roll;
-    vZb = -vYg*sin_roll + vZb*cos_roll;
+    vXb = vXg * cos_tilt - vZg * sin_tilt
+    vZb = vXg * sin_tilt + vZg * cos_tilt
+    vYb = vYg * cos_roll + vZb * sin_roll
+    vZb = -vYg * sin_roll + vZb * cos_roll
     return vXb, vYb, vZb
+
 
 def barycar_to_galactic(Xb, Yb, Zb):
     """
@@ -139,13 +145,14 @@ def barycar_to_galactic(Xb, Yb, Zb):
       dist :: scalar (kpc)
         Distance
     """
-    midplane_dist = tt.sqrt(Xb**2.0 + Yb**2.0)
-    dist = tt.sqrt(Xb**2.0 + Yb**2.0 + Zb**2.0)
-    cos_glong = Xb/midplane_dist
-    sin_glong = Yb/midplane_dist
-    cos_glat = midplane_dist/dist
-    sin_glat = Zb/dist
+    midplane_dist = tt.sqrt(Xb ** 2.0 + Yb ** 2.0)
+    dist = tt.sqrt(Xb ** 2.0 + Yb ** 2.0 + Zb ** 2.0)
+    cos_glong = Xb / midplane_dist
+    sin_glong = Yb / midplane_dist
+    cos_glat = midplane_dist / dist
+    sin_glat = Zb / dist
     return (cos_glong, sin_glong, cos_glat, sin_glat, dist)
+
 
 def calc_vlsr(cos_glong, sin_glong, cos_glat, sin_glat, vXb, vYb, vZb):
     """
@@ -163,6 +170,7 @@ def calc_vlsr(cos_glong, sin_glong, cos_glat, sin_glat, vXb, vYb, vZb):
       vlsr :: scalar (km/s)
         IAU-LSR velocity
     """
-    vlsr = ((cos_glong*(vXb + _USTD) + sin_glong*(vYb + _VSTD))*cos_glat +
-            (vZb + _WSTD)*sin_glat)
+    vlsr = (cos_glong * (vXb + _USTD) + sin_glong * (vYb + _VSTD)) * cos_glat + (
+        vZb + _WSTD
+    ) * sin_glat
     return vlsr

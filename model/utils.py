@@ -5,7 +5,7 @@ utils.py
 
 Other general utility functions.
 
-Copyright(C) 2020 by Trey Wenger <tvwenger@gmail.com>
+Copyright(C) 2020-2022 by Trey Wenger <tvwenger@gmail.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,10 +21,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Trey Wenger - August 2020
+Trey Wenger - May 2022 - Formatting
 """
 
 import torch as tt
 import numpy as np
+
 
 def calc_spiral_angle(az, dist, pitch, R0):
     """
@@ -44,7 +46,8 @@ def calc_spiral_angle(az, dist, pitch, R0):
       angle :: scalar (radians)
         The angle between the line-of-sight and the spiral
     """
-    return pitch + np.pi/2.0 - tt.asin(R0*tt.sin(az)/dist)
+    return pitch + np.pi / 2.0 - tt.asin(R0 * tt.sin(az) / dist)
+
 
 def calc_sigma2_glat(dist, sigma_arm):
     """
@@ -60,7 +63,8 @@ def calc_sigma2_glat(dist, sigma_arm):
       sigma2_glat :: scalar (radians^2)
         The width^2 in the latitude direction
     """
-    return tt.atan(sigma_arm/dist)**2.0
+    return tt.atan(sigma_arm / dist) ** 2.0
+
 
 def calc_sigma2_glong(dist, angle, sigma_arm):
     """
@@ -78,7 +82,8 @@ def calc_sigma2_glong(dist, angle, sigma_arm):
       sigma2_glong :: scalar (radians^2)
         The width^2 in the longitude direction
     """
-    return (tt.atan(sigma_arm/dist)*tt.cos(angle))**2.0
+    return (tt.atan(sigma_arm / dist) * tt.cos(angle)) ** 2.0
+
 
 def calc_sigma2_vlsr(dvlsr, angle, sigma_arm):
     """
@@ -96,4 +101,4 @@ def calc_sigma2_vlsr(dvlsr, angle, sigma_arm):
       sigma2_glong :: scalar (radians^2)
         The width^2 in the longitude direction
     """
-    return (dvlsr*sigma_arm*tt.sin(angle))**2.0
+    return (dvlsr * sigma_arm * tt.sin(angle)) ** 2.0
