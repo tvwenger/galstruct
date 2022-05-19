@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name="galstruct",
@@ -6,6 +6,6 @@ setup(
     description="Modeling Galactic structure",
     author="Trey V. Wenger",
     author_email="tvwenger@gmail.com",
-    packages=["galstruct"],
+    packages=find_packages(),
     install_requires=["numpy", "scipy", "torch", "matplotlib", "sbi"],
 )

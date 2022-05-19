@@ -7,8 +7,8 @@ Modeling Galactic structure with simulation based inference.
 I recommend installing `galstruct` in a virtual environment.
 
 ```bash
-python -m venv galstruct
-source galstruct/env/activate
+python -m venv env
+source env/bin/activate
 ```
 
 Clone this repository, navigate to it, then install via
