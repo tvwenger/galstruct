@@ -2,22 +2,6 @@
 
 Modeling Galactic structure with simulation based inference.
 
-## Requirements
-
-- Version 5 of [_CASA_](https://casa.nrao.edu/)
-- LaTeX installation with the available command `pdflatex`
-
-Note: The `matplotlib` and `astropy` packages included with _CASA_
-are very out of date (at least in _CASA_ version 5.7.2). You may need
-to upgrade these within _CASA_ via
-
-```python
-import pip
-pip.main(['install','pip','--upgrade'])
-pip.main(['install','astropy','--upgrade'])
-pip.main(['install','matplotlib','--upgrade'])
-```
-
 ## Installation
 
 I recommend installing `galstruct` in a virtual environment.
