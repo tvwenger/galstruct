@@ -130,8 +130,8 @@ def simulator(
         )
         prob = torch.exp(-spiral_R / Rs) / (1.0 + I2 * torch.exp(-spiral_R / Rc))
         prob = prob / torch.sum(prob, axis=1, keepdims=True)
-        idx = prob.multinomial(num_samples=num_data, replacement=True)
-        az = torch.gather(spiral_az, 1, idx)
+        idx = prob.multinomial(num_samples=1)
+        az = torch.gather(spiral_az, 1, idx)[:, 0]
     else:
         az = torch.tensor([saz[torch.randint(len(saz), (1,))[0]] for saz in spiral_az])
 

@@ -236,4 +236,3 @@ if __name__ == "__main__":
     )
     ARGS = vars(PARSER.parse_args())
     main(ARGS["net"], outdir=ARGS["outdir"])
-
