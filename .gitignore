@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Data
+*.pkl
+/galstruct/plots
+/galstruct/sbi-logs
+
 # Distribution / packaging
 .Python
 build/

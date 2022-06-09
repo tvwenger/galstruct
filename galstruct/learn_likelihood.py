@@ -42,7 +42,7 @@ from galstruct.torch_prior import Prior
 np.random.seed(1234)
 
 # default parameter values
-_NUM_SIMS = 1000
+_NUM_SIMS = 100000
 _DENSITY_ESTIMATOR = "maf"
 _HIDDEN_FEATURES = 50
 _TRANSFORM_LAYERS = 5

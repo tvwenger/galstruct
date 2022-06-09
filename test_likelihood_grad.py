@@ -33,9 +33,9 @@ import torch
 import theano
 import theano.tensor as tt
 
-from mcmc_posterior import Loglike
-from model.simulator import simulator
-from torch_prior import Prior
+from galstruct.mcmc_posterior import Loglike
+from galstruct.model.simulator import simulator
+from galstruct.torch_prior import Prior
 
 # set random seed
 np.random.seed(1234)
