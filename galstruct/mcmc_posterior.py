@@ -22,63 +22,92 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Trey Wenger - August 2020
+Trey Wenger - June 2022 - Updates for new pymc and aesara
 """
 
 import os
 import multiprocessing
+import numpy as np
+import argparse
+import pickle
+import dill
+
+import aesara
+import aesara.tensor as at
+
+import torch
+import pymc as pm
+
+from galstruct.model.simulator import simulator
+
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
 
 try:
     multiprocessing.set_start_method("spawn")
 except RuntimeError:
     pass
 
-import argparse
-import pickle
-import dill
-
-import torch
-import pymc as pm
-import aesara.tensor as at
-
-import numpy as np
-
-from galstruct.model.simulator import simulator
+aesara.config.floatX = "float32"
+#aesara.config.optimizer = "fast_compile"
+#aesara.config.exception_verbosity = "high"
 
 np.random.seed(1234)
 
+# parameter order for likelihood function
+_params = [
+    "q",
+    "az0",
+    "pitch",
+    "sigmaV",
+    "sigma_arm_plane",
+    "sigma_arm_height",
+    "R0",
+    "Usun",
+    "Vsun",
+    "Wsun",
+    "Upec",
+    "Vpec",
+    "a2",
+    "a3",
+    "Zsun",
+    "roll",
+    "warp_amp",
+    "warp_off",
+]
 # default values for synthetic spiral parameters
 _spiral_params = [
+    0.25,  # q
     0.25,
     0.25,
     0.25,
-    0.25,
-    np.deg2rad(72.0),
+    np.deg2rad(72.0),  # az0
     np.deg2rad(137.0),
     np.deg2rad(252.0),
     np.deg2rad(317.0),
+    np.deg2rad(14.0),  # pitch
     np.deg2rad(14.0),
     np.deg2rad(14.0),
     np.deg2rad(14.0),
-    np.deg2rad(14.0),
-    5.0,
-    0.5,
-    0.1,
+    5.0,  # sigmaV
+    0.5,  # sigma_arm_plane
+    0.1,  # sigma_arm_height
 ]
 # default values for GRM parameters
 _grm_params = [
-    8.16643777,
-    10.4543041,
-    12.18499493,
-    7.71886874,
-    5.79095823,
-    -3.39171583,
-    0.97757558,
-    1.62261724,
-    5.5,
-    0.0,
+    8.16643777,  # R0
+    10.4543041,  # Usun
+    12.18499493,  # Vsun
+    7.71886874,  # Wsun
+    5.79095823,  # Upec
+    -3.39171583,  # Vpec
+    0.97757558,  # a2
+    1.62261724,  # a3
+    5.5,  # Zsun
+    0.0,  # roll
 ]
 # default values for warp parameters
-_warp_params = [0.02, -0.5]
+_warp_params = [0.02, -0.5]  # warp_amp, warp_off
 # default values for exponential disk parameters
 _disk_params = [35.0, 3.0, 2.5]
 
@@ -103,141 +132,78 @@ _OVERWRITE = False
 
 
 class LogLikeCalc(torch.nn.Module):
-    def __init__(self, density_estimator, params, num_spirals):
+    def __init__(self, density_estimator, num_spirals, fixed):
         super(LogLikeCalc, self).__init__()
         self.density_estimator = density_estimator
-        for p in params:
-             setattr(self, p, torch.nn.Parameter(torch.tensor(0.0)))
         self.num_spirals = num_spirals
+        self.free_params = []
+        for p in _params:
+            if p in fixed:
+                setattr(self, p, torch.nn.Parameter(torch.tensor(fixed[p])))
+            else:
+                if p in ["q", "az0", "pitch"]:
+                    setattr(
+                        self, p, torch.nn.Parameter(torch.tensor([0.0] * num_spirals))
+                    )
+                else:
+                    setattr(self, p, torch.nn.Parameter(torch.tensor(0.0)))
+                self.free_params.append(getattr(self, p))
 
-    def forward(self, data, inputs):
-        print(inputs)
-        (theta,) = inputs
-        q = torch.as_tensor(theta[: self.num_spirals]).float()
-        az0 = torch.as_tensor(theta[self.num_spirals : 2 * self.num_spirals]).float()
-        pitch = torch.as_tensor(
-            theta[2 * self.num_spirals : 3 * self.num_spirals]
-        ).float()
-        params = torch.as_tensor(theta[3 * self.num_spirals :]).float()
+    def forward(self, data):
+        # parameters that do not depend on spiral
+        other_params = [getattr(self, p).reshape(1) for p in _params[3:]]
         # stack parameters for each likelihood evaluation
         thetas = [
-            torch.cat((az0[i].reshape(1), pitch[i].reshape(1), params))
+            torch.cat(
+                (self.az0[i].reshape(1), self.pitch[i].reshape(1), *other_params,)
+            )
             for i in range(self.num_spirals)
         ]
-        # evaluate loglike for each spiral and data point.
-        
-        logp = self.density_estimator.log_prob(data,thetas.expand(data.shape[0], -1))
-        # catch nans
-        logp[torch.isnan(logp)] = -np.inf
-        # marginalize over spiral
-        logp = torch.logsumexp(logp + torch.log(q[..., None]), 0)
-        # sum over data
-        return torch.sum(logp).float()
-
-    def grad(self,data,inputs):
-        (theta, ) = inputs
-        q = torch.as_tensor(theta[0: self.num_spirals]).float()
-        q.requires_grad = True
-
-        az0 = torch.as_tensor(theta[self.num_spirals : 2 * self.num_spirals]).float()
-        az0.requires_grad = True
-        
-        pitch = torch.as_tensor(
-            theta[2 * self.num_spirals : 3 * self.num_spirals]
-        ).float()
-        pitch.requires_grad = True
-        
-        params = torch.as_tensor(theta[3 * self.num_spirals :]).float()
-        params.requires_grad = True
-        
-        # stack parameters for each likelihood evaluation
-        thetas = [
-            torch.cat((az0[i].reshape(1), pitch[i].reshape(1), params))
-            for i in range(self.num_spirals)
-        ]
-        
         # evaluate loglike for each spiral and data point.
         logp = torch.stack(
             [
-                self.density_estimator.log_prob(self.data, context=thetas.expand(data.shape[0], -1))
-                for th in thetas
+                self.density_estimator.log_prob(
+                    data, context=theta.expand(data.shape[0], -1)
+                )
+                for theta in thetas
             ]
         )
-        
         # catch nans
         logp[torch.isnan(logp)] = -np.inf
-        
         # marginalize over spiral
-        logp = torch.logsumexp(logp + torch.log(q[..., None]), 0)
-        
+        logp = torch.logsumexp(logp + torch.log(self.q[..., None]), 0)
         # sum over data
-        logp = torch.sum(logp)
-        # calculate gradient (via backpropogation)
-        logp.backward()
-        grads = np.concatenate(
-            (
-                q.grad.detach().double().numpy(),
-                az0.grad.detach().double().numpy(),
-                pitch.grad.detach().double().numpy(),
-                params.grad.detach().double().numpy(),
-            )
-        )
-        return grads    
+        return torch.sum(logp).float()
+
+
 class LogLike(at.Op):
-    """
-    Theano.Operator handling likelihood and gradient calculations
-    from neural net.
-    """
-
-    itypes = [at.dvector]
-    otypes = [at.dscalar]
-
-    def __init__(self, loglike, data, params, num_spirals):
-        """
-        Initialize a new Loglike object.
-
-        Inputs:
-          loglike :: neural network object
-            Neural network
-          data :: 2-D torch.tensor
-            Data (shape N x 3)
-          num_spirals :: integer
-            Number of spirals
-
-        Returns: loglike
-          loglike :: A new Loglike instance
-        """
-        self.loglike_calc = loglike
+    def __init__(self, loglike_calc, data):
+        self.loglike_calc = loglike_calc
         self.data = data
-        self.params=params
-        self.num_spirals = num_spirals
-        #self.loglike_grad = LoglikeGrad(self.loglike_calc, self.data, self.num_spirals)
 
-    def perform(self, inputs,outputs):
-        """
-        Handle the calling of this Operator.
+    def make_node(self, *args):
+        return aesara.graph.basic.Apply(
+            self, args, [at.fscalar().type()] + [a.type() for a in args]
+        )
 
-        Inputs:
-          theta :: theano.vector
-            Parameters in this order:
-            q, az0, pitch, other parameters expected by likelihood
-        """
-        for param, value in zip(self.params, inputs):
+    def perform(self, node, inputs, outputs):
+        for param, value in zip(self.loglike_calc.free_params, inputs):
             param.data = torch.tensor(value)
             if param.grad is not None:
                 param.grad.detach_()
                 param.grad.zero_()
-        outputs[0][0] = self.loglike_calc.forward(self.data,inputs).detach().double().numpy()
-        self.loglike_calc.backward()
-        # for i, param in enumerate(self.params):
-        #     outputs[i+1][0] = param.grad.numpy()
 
-    def grad(self, inputs, grad_outputs):
-        """
-        Computes gradients
-        """
-        grads = self.loglike_calc.grad(self.data,inputs)
-        return [grad_outputs[0] * grads]
+        # evaluate likelihood and gradients
+        loglike = self.loglike_calc(self.data)
+        loglike.backward()
+
+        outputs[0][0] = loglike.detach().numpy()
+        for i, param in enumerate(self.loglike_calc.free_params):
+            outputs[i + 1][0] = param.grad.detach().numpy()
+
+    def grad(self, inputs, gradients):
+        return [gradients[0] * d for d in self(*inputs)[1:]]
+
 
 def main(
     db,
@@ -357,14 +323,14 @@ def main(
                 )
                 for theta, qi in zip(thetas, q)
             )
-        )
+        ).float()
     else:
         raise NotImplementedError("synthetic data only")
 
     # Get likelihood neural network object
     with open(loglike_net, "rb") as f:
         net = pickle.load(f)
-    
+
     # Setup model
     with pm.Model() as model:
         # Get parameter priors
@@ -378,14 +344,12 @@ def main(
                 num = num_spirals
                 shape = (num,)
             if priors[param][0] == "fixed":
-                determ[param] = np.array(priors[param][1:])
+                fixed[param] = np.array(priors[param][1:])
             elif priors[param][0] == "dirichlet":
                 if num > 1:
-                    determ[param] = pm.Dirichlet(
-                        param, a=np.ones(num), initval=np.ones(num) / num_spirals
-                    )
+                    determ[param] = pm.Dirichlet(param, a=np.ones(num),)
                 else:
-                    determ[param] = np.array([1.0])
+                    fixed[param] = np.array([1.0])
             elif priors[param][0] == "uniform":
                 lower = np.array(priors[param][1 : 2 * num + 1 : 2])
                 upper = np.array(priors[param][2 : 2 * num + 1 : 2])
@@ -393,11 +357,7 @@ def main(
                     lower = lower[0]
                     upper = upper[0]
                 determ[param] = pm.Uniform(
-                    param,
-                    lower=lower,
-                    upper=upper,
-                    shape=shape,
-                    initval=(upper - lower) / 2.0 + lower,
+                    param, lower=lower, upper=upper, shape=shape,
                 )
             elif priors[param][0] == "normal":
                 mean = np.array(priors[param][1 : 2 * num + 1 : 2])
@@ -405,73 +365,38 @@ def main(
                 if len(shape) == 0:
                     mean = mean[0]
                     sigma = sigma[0]
-                determ[param] = pm.Normal(
-                    param, mu=mean, sigma=sigma, shape=shape, initval=mean
-                )
+                determ[param] = pm.Normal(param, mu=mean, sigma=sigma, shape=shape,)
             elif priors[param][0] == "cauchy":
                 alpha = np.array(priors[param][1 : 2 * num + 1 : 2])
                 beta = np.array(priors[param][2 : 2 * num + 1 : 2])
                 if len(shape) == 0:
                     alpha = alpha[0]
                     beta = beta[0]
-                determ[param] = pm.Cauchy(
-                    param, alpha=alpha, beta=beta, shape=shape, initval=alpha
-                )
+                determ[param] = pm.Cauchy(param, alpha=alpha, beta=beta, shape=shape,)
             elif priors[param][0] == "halfnormal":
                 sigma = np.array(priors[param][1 : num + 1])
                 if len(shape) == 0:
                     sigma = sigma[0]
-                determ[param] = pm.HalfNormal(
-                    param, sigma=sigma, shape=shape, initval=sigma
-                )
+                determ[param] = pm.HalfNormal(param, sigma=sigma, shape=shape,)
             elif priors[param][0] == "halfcauchy":
                 beta = np.array(priors[param][1 : num + 1])
                 if len(shape) == 0:
                     beta = beta[0]
-                determ[param] = pm.HalfCauchy(
-                    param, beta=beta, shape=shape, initval=beta
-                )
+                determ[param] = pm.HalfCauchy(param, beta=beta, shape=shape,)
             else:
                 raise ValueError(
                     "Invalid prior for {0}: {1}".format(param, priors[param][0])
                 )
 
-        # Add fixed parameters
-        for param, value in fixed.items():
-            determ[param] = value
+        # Pack model parameters
+        theta = [determ[p] for p in _params if p not in fixed]
 
-        # Pack model parameters expected by likelihood net
-        theta = []
-        params = [
-            "sigmaV",
-            "sigma_arm_plane",
-            "sigma_arm_height",
-            "R0",
-            "Usun",
-            "Vsun",
-            "Wsun",
-            "Upec",
-            "Vpec",
-            "a2",
-            "a3",
-            "Zsun",
-            "roll",
-            "warp_amp",
-            "warp_off",
-        ]
-        # Create likelihood Op
-        loglikecalc = LogLikeCalc(net["density_estimator"], params, num_spirals)
-        torchparams=[]
-        for p in params:
-            torchparams+=[getattr(loglikecalc,p)]
-            if p in net["priors"]:
-                theta += [determ[p]]
-        #print(theta)
-        theta = at.as_tensor_variable(theta)
-        theta = at.concatenate([determ["q"], determ["az0"], determ["pitch"], theta])
-        loglike = LogLike(loglikecalc, data, torchparams, num_spirals)
+        # Create likelihood Operator
+        loglike_calc = LogLikeCalc(net["density_estimator"], num_spirals, fixed)
+        loglike_op = LogLike(loglike_calc, data)
+
         # Evalulate likelihood
-        like = pm.Potential("like", loglike(theta))
+        like = pm.Potential("like", loglike_op(*theta)[0])
 
     # Run inference
     with model:
@@ -483,7 +408,6 @@ def main(
             cores=num_chains,
             chains=num_chains,
             target_accept=target_accept,
-            step_scale=step_scale,
         )
         with open(outfile, "wb") as f:
             dill.dump({"data": data, "model": model, "trace": trace}, f)
