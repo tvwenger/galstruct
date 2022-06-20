@@ -26,34 +26,31 @@ Trey Wenger - June 2022 - Updates for new pymc and aesara
 """
 
 import os
+import multiprocessing
+import numpy as np
+import argparse
+import pickle
+import dill
+
+import aesara
+import aesara.tensor as at
+
+import torch
+import pymc as pm
+
+from galstruct.model.simulator import simulator
 
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
-
-import multiprocessing
 
 try:
     multiprocessing.set_start_method("spawn")
 except RuntimeError:
     pass
 
-import argparse
-import pickle
-import dill
-
-import aesara
-
-aesara.config.floatX = "float64"
-aesara.config.optimizer = "fast_compile"
-aesara.config.exception_verbosity = "high"
-import aesara.tensor as at
-
-import torch
-import pymc as pm
-
-import numpy as np
-
-from galstruct.model.simulator import simulator
+aesara.config.floatX = "float32"
+#aesara.config.optimizer = "fast_compile"
+#aesara.config.exception_verbosity = "high"
 
 np.random.seed(1234)
 
@@ -166,7 +163,7 @@ class LogLikeCalc(torch.nn.Module):
         logp = torch.stack(
             [
                 self.density_estimator.log_prob(
-                    data.float(), context=theta.expand(data.shape[0], -1).float()
+                    data, context=theta.expand(data.shape[0], -1)
                 )
                 for theta in thetas
             ]
@@ -176,17 +173,17 @@ class LogLikeCalc(torch.nn.Module):
         # marginalize over spiral
         logp = torch.logsumexp(logp + torch.log(self.q[..., None]), 0)
         # sum over data
-        return torch.sum(logp)
+        return torch.sum(logp).float()
 
 
 class LogLike(at.Op):
     def __init__(self, loglike_calc, data):
         self.loglike_calc = loglike_calc
-        self.data = data.float()
+        self.data = data
 
     def make_node(self, *args):
         return aesara.graph.basic.Apply(
-            self, args, [at.dscalar().type()] + [a.type() for a in args]
+            self, args, [at.fscalar().type()] + [a.type() for a in args]
         )
 
     def perform(self, node, inputs, outputs):
@@ -203,14 +200,8 @@ class LogLike(at.Op):
         outputs[0][0] = loglike.detach().numpy()
         for i, param in enumerate(self.loglike_calc.free_params):
             outputs[i + 1][0] = param.grad.detach().numpy()
-        print("outputs")
-        print(outputs)
-        print()
 
     def grad(self, inputs, gradients):
-        print("gradients")
-        print([gradients[0] * d for d in self(*inputs)[1:]])
-        print()
         return [gradients[0] * d for d in self(*inputs)[1:]]
 
 
@@ -332,7 +323,7 @@ def main(
                 )
                 for theta, qi in zip(thetas, q)
             )
-        )
+        ).float()
     else:
         raise NotImplementedError("synthetic data only")
 
