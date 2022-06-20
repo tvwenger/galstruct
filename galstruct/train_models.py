@@ -2,7 +2,7 @@ import os
 import argparse
 import pickle
 import numpy as np
-
+import time
 import torch
 
 from pathlib import Path
@@ -184,6 +184,7 @@ if __name__=="__main__":
                     for sbs in ARGS["sim_batch_size"]:
                         for tbs in ARGS["training_batch_size"]:
                             if not(ARGS["plot"]):
+                                tic=time.perf_counter()
                                 learn_likelihood.main(
                                     ARGS["outfile"]+"_"+DE+"_nsims="+str(n_sims)+"_feat="+str(feat)+"_layers="+str(layers)\
                                         +"_sbs="+str(sbs)+"_tbs="+str(tbs)+".pkl",
@@ -200,6 +201,11 @@ if __name__=="__main__":
                                     fixed=FIXED,
                                     overwrite=ARGS["overwrite"],
                                 )
+                                toc=time.perf_counter()
+                                delta_t = toc-tic
+                                print("Training Complete. File exported to "+ ARGS["outfile"]+"_"+DE+"_nsims="+str(n_sims)+"_feat="+str(feat)+"_layers="+str(layers)\
+                                        +"_sbs="+str(sbs)+"_tbs="+str(tbs)+".pkl" + \
+                                            "\n Time taken: {}".format(delta_t))
                             else:
                                 outdir="plots/"+ARGS["outfile"]+"_"+DE+"_nsims="+str(n_sims)+"_feat="+str(feat)+"_layers="+str(layers)\
                                         +"_sbs="+str(sbs)+"_tbs="+str(tbs)+"/"

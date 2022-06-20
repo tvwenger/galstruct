@@ -1,0 +1,12 @@
+{'path': 'data/varysims_nsf\\test_network_nsf_nsims=5000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'p1': -676.7149, 'mean diff': array([215.65019329]), 'std': array([139.91736555]), 'median': array([188.50439453])}
+
+{'path': 'data/varysims_nsf\\test_network_nsf_nsims=10000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'p1': -696.1597, 'mean diff': array([266.45867336]), 'std': array([166.34832393]), 'median': array([235.61663818])}
+
+{'path': 'data/varysims_nsf\\test_network_nsf_nsims=20000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'p1': -701.3799, 'mean diff': array([302.33425788]), 'std': array([160.63948606]), 'median': array([272.97299194])}
+
+{'path': 'data/varysims_nsf\\test_likelihood_nsf_nsims=50000_feat=50_layers=5.pkl', 'p1': -758.2155, 'mean diff': array([389.21197758]), 'std': array([192.47594309]), 'median': array([355.36941528])}
+
+{'path': 'data/varysims_nsf\\test_network_nsf_nsims=60000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'p1': -797.04785, 'mean diff': array([431.75947365]), 'std': array([215.24930321]), 'median': array([392.50862122])}
+
+{'path': 'data/varysims_nsf\\test_network_nsf_nsims=70000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'p1': -801.8041, 'mean diff': array([443.82702174]), 'std': array([217.32282063]), 'median': array([405.72351074])}
+

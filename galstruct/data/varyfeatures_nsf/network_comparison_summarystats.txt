@@ -1,0 +1,22 @@
+{'path': 'data/varyfeatures_nsf\\test_model_nsf_nsims=50000_feat=10_layers=5_sbs=1_tbs=50.pkl', 'p1': -813.21387, 'mean diff': array([459.39222269]), 'std': array([232.69631022]), 'median': array([420.19674683])}
+
+{'path': 'data/varyfeatures_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'p1': -851.97314, 'mean diff': array([495.96160712]), 'std': array([257.14494789]), 'median': array([454.40855408])}
+
+{'path': 'data/varyfeatures_nsf\\test_likelihood_nsf_nsims=50000_feat=20_layers=5_sbs=1_tbs=50.pkl', 'p1': -814.04315, 'mean diff': array([457.54383907]), 'std': array([227.93026661]), 'median': array([418.86935425])}
+
+{'path': 'data/varyfeatures_nsf\\test_likelihood_nsf_nsims=50000_feat=22_layers=5_sbs=1_tbs=50.pkl', 'p1': -833.5506, 'mean diff': array([474.05152141]), 'std': array([242.12653219]), 'median': array([437.78056335])}
+
+{'path': 'data/varyfeatures_nsf\\test_model_nsf_nsims=50000_feat=25_layers=5_sbs=1_tbs=50.pkl', 'p1': -811.2554, 'mean diff': array([451.54548479]), 'std': array([221.91913924]), 'median': array([418.46168518])}
+
+{'path': 'data/varyfeatures_nsf\\test_likelihood_nsf_nsims=50000_feat=30_layers=5_sbs=1_tbs=50.pkl', 'p1': -820.142, 'mean diff': array([460.69075901]), 'std': array([230.38792988]), 'median': array([423.0118103])}
+
+{'path': 'data/varyfeatures_nsf\\test_likelihood_nsf_nsims=50000_feat=35_layers=5_sbs=1_tbs=50.pkl', 'p1': -796.3178, 'mean diff': array([436.37572823]), 'std': array([218.03511034]), 'median': array([402.91120911])}
+
+{'path': 'data/varyfeatures_nsf\\test_likelihood_nsf_nsims=50000_feat=40_layers=5_sbs=1_tbs=50.pkl', 'p1': -783.2448, 'mean diff': array([419.23826222]), 'std': array([205.41453063]), 'median': array([389.52752686])}
+
+{'path': 'data/varyfeatures_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'p1': -791.1433, 'mean diff': array([426.29894324]), 'std': array([212.60186546]), 'median': array([394.76556396])}
+
+{'path': 'data/varyfeatures_nsf\\test_model_nsf_nsims=50000_feat=75_layers=5_sbs=1_tbs=50.pkl', 'p1': -794.09985, 'mean diff': array([422.16714304]), 'std': array([206.6009545]), 'median': array([395.1025238])}
+
+{'path': 'data/varyfeatures_nsf\\test_model_nsf_nsims=50000_feat=100_layers=5_sbs=1_tbs=50.pkl', 'p1': -785.74243, 'mean diff': array([413.42212364]), 'std': array([208.20410408]), 'median': array([379.15393066])}
+

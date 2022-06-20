@@ -33,7 +33,7 @@ import torch
 import theano
 import theano.tensor as tt
 
-from galstruct.mcmc_posterior import Loglike
+from galstruct.mcmc_posterior_old import Loglike
 from galstruct.model.simulator import simulator
 from galstruct.torch_prior import Prior
 

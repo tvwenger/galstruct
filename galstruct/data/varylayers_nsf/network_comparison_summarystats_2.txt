@@ -1,0 +1,156 @@
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'mean': 2418.1182, 'std': 983.1554, 'median': 2395.9832}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'mean': 6288.2324, 'std': 2738.8386, 'median': 6298.509}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'mean': 1946.9084, 'std': 835.5953, 'median': 1903.2295}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'mean': 1879.9607, 'std': 865.44196, 'median': 1838.9762}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'mean': 4940.0444, 'std': 2376.502, 'median': 4584.257}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'mean': 3830.572, 'std': 1277.35, 'median': 3632.335}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'mean': 2784.2234, 'std': 1262.538, 'median': 2531.2654}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'mean': 3139.819, 'std': 1094.0629, 'median': 3016.6128}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'mean': 2937.4683, 'std': 1229.4111, 'median': 2643.113}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2765.252, 'std': 1115.8777, 'median': 2752.2646}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 5281.044, 'std': 2086.6501, 'median': 5009.412}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=10_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3498.1863, 'std': 1290.9541, 'median': 3323.0325}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'mean': 5739.9985, 'std': 2667.0571, 'median': 5594.3096}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'mean': 1438.354, 'std': 637.3116, 'median': 1437.1963}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'mean': 1354.8726, 'std': 655.5086, 'median': 1387.3352}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'mean': 4430.215, 'std': 2388.496, 'median': 3794.5867}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'mean': 3302.8682, 'std': 1274.7396, 'median': 3221.1084}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'mean': 2281.724, 'std': 1129.8026, 'median': 1989.0822}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'mean': 2626.4941, 'std': 1018.445, 'median': 2632.4463}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'mean': 2412.9683, 'std': 1174.2491, 'median': 2192.634}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2245.4194, 'std': 985.61755, 'median': 2130.5469}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 4765.1626, 'std': 1985.5961, 'median': 4532.8657}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 2979.3438, 'std': 1321.9773, 'median': 2793.6938}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'mean': 1959.8088, 'std': 853.29346, 'median': 1931.625}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'mean': 1879.8865, 'std': 893.3976, 'median': 1780.3683}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'mean': 4948.1133, 'std': 2358.149, 'median': 4434.4385}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'mean': 3832.8142, 'std': 1314.0361, 'median': 3801.1592}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'mean': 2794.4792, 'std': 1283.876, 'median': 2461.484}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'mean': 3135.6218, 'std': 1136.6746, 'median': 3062.664}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'mean': 2947.3423, 'std': 1244.3147, 'median': 2792.646}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2758.063, 'std': 1080.0922, 'median': 2708.1545}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 5298.1235, 'std': 2032.6112, 'median': 4916.958}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3492.095, 'std': 1299.5967, 'median': 3337.5244}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'mean': 1801.9907, 'std': 880.756, 'median': 1741.4363}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'mean': 4876.2666, 'std': 2373.2844, 'median': 4277.9604}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'mean': 3744.0564, 'std': 1294.6097, 'median': 3666.5747}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'mean': 2715.3618, 'std': 1261.9078, 'median': 2360.233}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'mean': 3071.139, 'std': 1131.8694, 'median': 2964.5288}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'mean': 2863.2808, 'std': 1243.8821, 'median': 2536.957}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2701.607, 'std': 1126.7994, 'median': 2623.566}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 5188.12, 'std': 2088.537, 'median': 5007.9414}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=4_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3429.067, 'std': 1324.5226, 'median': 3240.314}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'mean': 5028.1875, 'std': 2394.814, 'median': 4519.1694}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'mean': 3927.9465, 'std': 1330.0209, 'median': 3814.0347}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'mean': 2866.5864, 'std': 1298.9437, 'median': 2600.359}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'mean': 3225.7124, 'std': 1130.2106, 'median': 3136.5237}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'mean': 3016.9805, 'std': 1282.737, 'median': 2810.5002}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2834.1633, 'std': 1079.9259, 'median': 2777.113}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 5372.729, 'std': 2033.6127, 'median': 5088.667}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=5_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3581.631, 'std': 1358.3137, 'median': 3384.2678}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'mean': 3854.1213, 'std': 1320.4117, 'median': 3729.6338}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'mean': 2816.949, 'std': 1290.7618, 'median': 2566.9072}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'mean': 3160.6792, 'std': 1112.1442, 'median': 3069.1992}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'mean': 2941.9646, 'std': 1233.3322, 'median': 2664.2915}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2794.8735, 'std': 1107.8662, 'median': 2770.503}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 5337.9917, 'std': 2036.094, 'median': 5019.3555}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=6_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3511.7886, 'std': 1320.3556, 'median': 3334.713}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'mean': 2853.4656, 'std': 1280.8489, 'median': 2571.0525}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'mean': 3182.762, 'std': 1067.2684, 'median': 3088.2349}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'mean': 2995.8176, 'std': 1228.7878, 'median': 2702.1287}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2836.8271, 'std': 1088.1526, 'median': 2752.48}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 5326.377, 'std': 2029.7771, 'median': 5023.839}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=7_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3571.864, 'std': 1312.5884, 'median': 3392.899}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'mean': 3175.084, 'std': 1125.6289, 'median': 3081.808}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'mean': 2963.4211, 'std': 1245.6749, 'median': 2717.6465}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2800.2454, 'std': 1125.8894, 'median': 2749.0686}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 5297.5986, 'std': 2036.0063, 'median': 5027.938}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=8_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3523.7422, 'std': 1320.5754, 'median': 3409.796}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'mean': 2991.8098, 'std': 1225.416, 'median': 2757.7393}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2804.2485, 'std': 1120.136, 'median': 2810.5757}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 5331.1377, 'std': 2035.0526, 'median': 5102.2}
+
+{'path1': 'data/varylayers_nsf\\test_likelihood_nsf_nsims=50000_feat=15_layers=9_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3516.3352, 'std': 1292.1013, 'median': 3365.2727}
+
+{'path1': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'mean': 2295.272, 'std': 982.37274, 'median': 2222.2747}
+
+{'path1': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 4791.784, 'std': 1976.5127, 'median': 4549.917}
+
+{'path1': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=2_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 2989.9897, 'std': 1303.627, 'median': 2803.3616}
+
+{'path1': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'mean': 5125.2305, 'std': 2009.0775, 'median': 4807.005}
+
+{'path1': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=3_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3326.6755, 'std': 1288.6305, 'median': 3045.0894}
+
+{'path1': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=5_sbs=1_tbs=50.pkl', 'path2': 'data/varylayers_nsf\\test_model_nsf_nsims=50000_feat=50_layers=7_sbs=1_tbs=50.pkl', 'mean': 3438.1448, 'std': 1298.8011, 'median': 3268.8252}
+
