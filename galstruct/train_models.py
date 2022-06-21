@@ -91,7 +91,7 @@ def main(
     layers,
     sim_batches,
     train_batches,
-    priors=DEFAULT_PRIORS,
+    priors={},
     Rmin=_RMIN,
     Rmax=_RMAX,
     Rref=_RREF,
@@ -157,7 +157,7 @@ def main(
             tic = time.perf_counter()
             learn_likelihood.main(
                 fname,
-                PRIORS,
+                priors,
                 num_sims=nsim,
                 density_estimator=de,
                 hidden_features=nfeat,
@@ -297,7 +297,7 @@ if __name__ == "__main__":
         ARGS["layers"],
         ARGS["sim_batch_size"],
         ARGS["training_batch_size"],
-        priors=PRIOR,
+        priors=PRIORS,
         fixed=FIXED,
         plot=ARGS["plot"],
         overwrite=ARGS["overwrite"],
