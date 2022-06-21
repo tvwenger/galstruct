@@ -1,14 +1,33 @@
-import os
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+train_models.py
+
+Generate several neural networks with a variety of parameters.
+
+Copyright(C) 2022 by Catie Terrey & Trey Wenger <tvwenger@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Catie Terrey & Trey Wenger - June 2022
+"""
+
 import argparse
-import pickle
-import numpy as np
 import time
-import torch
+import itertools
 
 from pathlib import Path
-
-from sbi.utils import likelihood_nn
-from sbi.inference import SNLE, prepare_for_sbi, simulate_for_sbi
 
 from galstruct import learn_likelihood, plot_likelihood
 
@@ -22,8 +41,6 @@ _TRAINING_BATCH_SIZE = [50]
 _RMIN = 3.0
 _RMAX = 15.0
 _RREF = 8.0
-_FIXED = {}
-_OVERWRITE = False
 
 DEFAULT_PRIORS = [
     ["az0", "uniform", 0.0, 6.3],
@@ -44,7 +61,7 @@ DEFAULT_PRIORS = [
     ["warp_amp", "halfnormal", 0.05],
     ["warp_off", "normal", -0.5, 1.0],
 ]
-# Generate priors dictionary
+
 PARAMS = [
     "az0",
     "pitch",
@@ -65,7 +82,103 @@ PARAMS = [
     "warp_off",
 ]
 
-if __name__=="__main__":
+
+def main(
+    outfile,
+    density_estimators,
+    nsims,
+    features,
+    layers,
+    sim_batches,
+    train_batches,
+    priors=DEFAULT_PRIORS,
+    Rmin=_RMIN,
+    Rmax=_RMAX,
+    Rref=_RREF,
+    fixed={},
+    plot=False,
+    overwrite=False,
+):
+    """
+    Generate several neural networks with a variety of parameters.
+
+    Inputs:
+      outfile :: string
+          Output filename prefix. Files have names like:
+          f"{outfile}_{density_estimator}_nsims={nsim}_feat={feat}_layers={layer}_sbs={sb}_tbs={tb}.pkl"
+      density_estimators :: list of strings
+          Density estimators to use
+      nsims :: list of integers
+          Number of simulations
+      features :: list of integers
+          Number of features
+      layers :: list of integers
+          Number of layers
+      sim_batches :: list of integers
+          Number of simulation batch sizes
+      train_batches :: list of integers
+          Number of training batch sizes
+      priors :: dictionary
+        Priors for each paramter. The keys must be the parameter names:
+            az0, pitch, sigmaV, sigma_arm_plane, sigma_arm_height,
+            R0, Usun, Vsun, Upec, Vpec, a2, a3, Zsun, roll,
+            warp_amp, warp_off
+        The value of each key must be a list with one of the following
+        formats.
+          ['normal', mean, width]
+          ['halfnormal', width]
+          ['cauchy', mode, scale]
+          ['halfcauchy', scale]
+          ['uniform', lower, upper]
+          ['fixed', value]
+      Rmin, Rmax :: scalars (kpc)
+        The minimum and maximum radii of the spirals
+      Rref :: scalar (kpc)
+        The radius where the arm crosses the reference azimuth
+      fixed :: dictionary
+        Fixed GRM parameters (keys) and their fixed values.
+      plot :: boolean
+          If True, generate plot instead of network
+      overwrite :: boolean
+          If True, overwrite outfile
+
+    Returns:
+        Nothing
+    """
+    for de, nsim, nfeat, nlayer, sb, tb in itertools.product(
+        density_estimators, nsims, features, layers, sim_batches, train_batches
+    ):
+        fname = f"{outfile}_{de}_nsims={nsim}_feat={nfeat}_layers={nlayer}_sbs={sb}_tbs={tb}.pkl"
+        if plot:
+            outdir = f"plots/{outfile}_{de}_nsims={nsim}_feat={nfeat}_layers={nlayer}_sbs={sb}_tbs={tb}/"
+            Path(outdir).mkdir(parents=True, exist_ok=True)
+            plot_likelihood.main(fname, outdir=outdir)
+        else:
+            tic = time.perf_counter()
+            learn_likelihood.main(
+                fname,
+                PRIORS,
+                num_sims=nsim,
+                density_estimator=de,
+                hidden_features=nfeat,
+                transform_layers=nlayer,
+                sim_batch_size=sb,
+                training_batch_size=tb,
+                Rmin=Rmin,
+                Rmax=Rmax,
+                Rref=Rref,
+                fixed=fixed,
+                overwrite=overwrite,
+            )
+            toc = time.perf_counter()
+            delta_t = toc - tic
+            print(
+                f"Training Complete. File exported to {fname} \n"
+                + f"Time taken: {delta_t}"
+            )
+
+
+if __name__ == "__main__":
     PARSER = argparse.ArgumentParser(
         description="Train Neural Network for Spiral Model Likelihood",
         prog="train_models.py",
@@ -139,7 +252,6 @@ if __name__=="__main__":
             + "--prior az0 uniform 0.0 6.3 --prior sigmaV halfnormal 10.0)"
         ),
     )
-
     PARSER.add_argument(
         "--fixed",
         action="append",
@@ -151,15 +263,14 @@ if __name__=="__main__":
         ),
     )
     PARSER.add_argument(
-        "--plot",
-        default=False,
-        help="Whether or not to generate all frames"
+        "--plot", default=False, help="Whether or not to generate all frames"
     )
     PARSER.add_argument(
         "--overwrite", action="store_true", help="Overwrite existing outfile"
     )
     ARGS = vars(PARSER.parse_args())
 
+    # build priors dictionary
     PRIORS = {}
     FIXED = {}
     for PARAM in PARAMS:
@@ -177,41 +288,17 @@ if __name__=="__main__":
             for PRIOR in DEFAULT_PRIORS:
                 if PRIOR[0] == PARAM:
                     PRIORS[PARAM] = [PRIOR[1]] + [float(v) for v in PRIOR[2:]]
-    for DE in ARGS["density_estimator"]:
-        for n_sims in ARGS["nsims"]:
-            for feat in ARGS["features"]:
-                for layers in ARGS["layers"]:
-                    for sbs in ARGS["sim_batch_size"]:
-                        for tbs in ARGS["training_batch_size"]:
-                            if not(ARGS["plot"]):
-                                tic=time.perf_counter()
-                                learn_likelihood.main(
-                                    ARGS["outfile"]+"_"+DE+"_nsims="+str(n_sims)+"_feat="+str(feat)+"_layers="+str(layers)\
-                                        +"_sbs="+str(sbs)+"_tbs="+str(tbs)+".pkl",
-                                    PRIORS,
-                                    num_sims=n_sims,
-                                    density_estimator=DE,
-                                    hidden_features=feat,
-                                    transform_layers=layers,
-                                    sim_batch_size=sbs,
-                                    training_batch_size=tbs,
-                                    Rmin=ARGS["Rmin"],
-                                    Rmax=ARGS["Rmax"],
-                                    Rref=ARGS["Rref"],
-                                    fixed=FIXED,
-                                    overwrite=ARGS["overwrite"],
-                                )
-                                toc=time.perf_counter()
-                                delta_t = toc-tic
-                                print("Training Complete. File exported to "+ ARGS["outfile"]+"_"+DE+"_nsims="+str(n_sims)+"_feat="+str(feat)+"_layers="+str(layers)\
-                                        +"_sbs="+str(sbs)+"_tbs="+str(tbs)+".pkl" + \
-                                            "\n Time taken: {}".format(delta_t))
-                            else:
-                                outdir="plots/"+ARGS["outfile"]+"_"+DE+"_nsims="+str(n_sims)+"_feat="+str(feat)+"_layers="+str(layers)\
-                                        +"_sbs="+str(sbs)+"_tbs="+str(tbs)+"/"
-                                Path(outdir).mkdir(parents=True,exist_ok=True)
-                                plot_likelihood.main(
-                                    ARGS["outfile"]+"_"+DE+"_nsims="+str(n_sims)+"_feat="+str(feat)+"_layers="+str(layers)\
-                                        +"_sbs="+str(sbs)+"_tbs="+str(tbs)+".pkl",
-                                    outdir=outdir
-                                )
+
+    main(
+        ARGS["outfile"],
+        ARGS["density_estimator"],
+        ARGS["nsims"],
+        ARGS["features"],
+        ARGS["layers"],
+        ARGS["sim_batch_size"],
+        ARGS["training_batch_size"],
+        priors=PRIOR,
+        fixed=FIXED,
+        plot=ARGS["plot"],
+        overwrite=ARGS["overwrite"],
+    )

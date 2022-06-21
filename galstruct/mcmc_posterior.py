@@ -49,8 +49,6 @@ except RuntimeError:
     pass
 
 aesara.config.floatX = "float32"
-#aesara.config.optimizer = "fast_compile"
-#aesara.config.exception_verbosity = "high"
 
 np.random.seed(1234)
 
@@ -155,7 +153,11 @@ class LogLikeCalc(torch.nn.Module):
         # stack parameters for each likelihood evaluation
         thetas = [
             torch.cat(
-                (self.az0[i].reshape(1), self.pitch[i].reshape(1), *other_params,)
+                (
+                    self.az0[i].reshape(1),
+                    self.pitch[i].reshape(1),
+                    *other_params,
+                )
             )
             for i in range(self.num_spirals)
         ]
@@ -347,7 +349,10 @@ def main(
                 fixed[param] = np.array(priors[param][1:])
             elif priors[param][0] == "dirichlet":
                 if num > 1:
-                    determ[param] = pm.Dirichlet(param, a=np.ones(num),)
+                    determ[param] = pm.Dirichlet(
+                        param,
+                        a=np.ones(num),
+                    )
                 else:
                     fixed[param] = np.array([1.0])
             elif priors[param][0] == "uniform":
@@ -357,7 +362,10 @@ def main(
                     lower = lower[0]
                     upper = upper[0]
                 determ[param] = pm.Uniform(
-                    param, lower=lower, upper=upper, shape=shape,
+                    param,
+                    lower=lower,
+                    upper=upper,
+                    shape=shape,
                 )
             elif priors[param][0] == "normal":
                 mean = np.array(priors[param][1 : 2 * num + 1 : 2])
@@ -365,24 +373,42 @@ def main(
                 if len(shape) == 0:
                     mean = mean[0]
                     sigma = sigma[0]
-                determ[param] = pm.Normal(param, mu=mean, sigma=sigma, shape=shape,)
+                determ[param] = pm.Normal(
+                    param,
+                    mu=mean,
+                    sigma=sigma,
+                    shape=shape,
+                )
             elif priors[param][0] == "cauchy":
                 alpha = np.array(priors[param][1 : 2 * num + 1 : 2])
                 beta = np.array(priors[param][2 : 2 * num + 1 : 2])
                 if len(shape) == 0:
                     alpha = alpha[0]
                     beta = beta[0]
-                determ[param] = pm.Cauchy(param, alpha=alpha, beta=beta, shape=shape,)
+                determ[param] = pm.Cauchy(
+                    param,
+                    alpha=alpha,
+                    beta=beta,
+                    shape=shape,
+                )
             elif priors[param][0] == "halfnormal":
                 sigma = np.array(priors[param][1 : num + 1])
                 if len(shape) == 0:
                     sigma = sigma[0]
-                determ[param] = pm.HalfNormal(param, sigma=sigma, shape=shape,)
+                determ[param] = pm.HalfNormal(
+                    param,
+                    sigma=sigma,
+                    shape=shape,
+                )
             elif priors[param][0] == "halfcauchy":
                 beta = np.array(priors[param][1 : num + 1])
                 if len(shape) == 0:
                     beta = beta[0]
-                determ[param] = pm.HalfCauchy(param, beta=beta, shape=shape,)
+                determ[param] = pm.HalfCauchy(
+                    param,
+                    beta=beta,
+                    shape=shape,
+                )
             else:
                 raise ValueError(
                     "Invalid prior for {0}: {1}".format(param, priors[param][0])
@@ -410,7 +436,9 @@ def main(
             target_accept=target_accept,
         )
         with open(outfile, "wb") as f:
-            dill.dump({"data": data, "model": model, "trace": trace}, f)
+            dill.dump({"data": data, "trace": trace}, f)
+            # following fails due to issue with dill in python >3.8
+            # dill.dump({"model": model}, f)
     print(pm.summary(trace).to_string())
 
 
