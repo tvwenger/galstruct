@@ -152,7 +152,9 @@ def main(
         if plot:
             outdir = f"plots/{outfile}_{de}_nsims={nsim}_feat={nfeat}_layers={nlayer}_sbs={sb}_tbs={tb}/"
             Path(outdir).mkdir(parents=True, exist_ok=True)
-            plot_likelihood.main(fname, outdir=outdir)
+            plot_likelihood.main(
+                fname, outdir=outdir, Rmin=Rmin, Rmax=Rmax, Rref=Rref, fixed=fixed
+            )
         else:
             tic = time.perf_counter()
             learn_likelihood.main(
