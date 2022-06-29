@@ -76,9 +76,12 @@ class Prior:
             "warp_amp",
             "warp_off",
         ]
+        for name in priors.keys():
+            if name not in param_names:
+                raise ValueError(f"Invalid parameter name {name}")
         for name in param_names:
             if name not in priors:
-                raise ValueError(f"Invalid parameter name {name}")
+                continue
             if priors[name][0] == "uniform":
                 self.priors.append(dist.Uniform(priors[name][1], priors[name][2]))
             elif priors[name][0] == "normal":

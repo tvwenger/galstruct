@@ -37,10 +37,30 @@ import torch as tt
 from galstruct.model.simulator import simulator
 from galstruct.model.likelihood import log_like
 
+# parameter order for likelihood function
+_params = [
+    "pitch",
+    "sigmaV",
+    "sigma_arm_plane",
+    "sigma_arm_height",
+    "R0",
+    "Usun",
+    "Vsun",
+    "Wsun",
+    "Upec",
+    "Vpec",
+    "a2",
+    "a3",
+    "Zsun",
+    "roll",
+    "warp_amp",
+    "warp_off",
+]
 
+# values held as constant for each parameter
 _THETA = [
-    0.25,
-    5.0,
+    0.25, # pitch
+    5.0, # sigmaV
     0.5,
     0.1,
     8.166,
@@ -66,6 +86,7 @@ def main(
     Rmin=3.0,
     Rmax=15.0,
     Rref=8.0,
+    fixed={},
 ):
     """
     Generate plots of simulated data, data sampled from the learned
@@ -91,11 +112,25 @@ def main(
         The minimum and maximum radii of the spirals
       Rref :: scalar (kpc)
         The radius where the arm crosses the reference azimuth
+      fixed :: dictionary
+        Fixed GRM parameters (keys) and their fixed values.
 
     Returns: Nothing
     """
+    if not os.path.isdir(outdir):
+        os.mkdir(outdir)
+    
+    # keep only free params for likelihood theta
+    like_theta = []
+    all_theta = []
+    for param, value in zip(_params, theta):
+        all_theta += [value]
+        if param not in fixed.keys():
+            like_theta += [value]
+
     # add az0 placeholder to theta. Get range of az0
-    theta = tt.tensor([0.0] + theta)
+    like_theta = tt.tensor([0.0] + like_theta)
+    all_theta = tt.tensor([0.0] + all_theta)
     az0s_deg = np.linspace(0.0, 359.0, 360)
     az0s = np.deg2rad(az0s_deg)
 
@@ -118,11 +153,12 @@ def main(
     for i, (az0_deg, az0) in enumerate(zip(az0s_deg, az0s)):
         fig, ax = plt.subplots(1, 4, sharex=True, sharey=True, figsize=(16, 9))
         fig.subplots_adjust(left=0.075, right=0.99, bottom=0.225, top=0.95, wspace=0)
-        theta[0] = az0
+        like_theta[0] = az0
+        all_theta[0] = az0
 
         # Simulated data
         data = simulator(
-            theta.expand(num_data, -1),
+            all_theta.expand(num_data, -1),
             Rmin=tt.tensor(Rmin),
             Rmax=tt.tensor(Rmax),
             Rref=tt.tensor(Rref),
@@ -148,7 +184,7 @@ def main(
         # Grid true likelihood data
         logp = log_like(
             grid,
-            theta,
+            all_theta,
             Rmin=tt.tensor(Rmin),
             Rmax=tt.tensor(Rmax),
             Rref=tt.tensor(Rref),
@@ -172,7 +208,7 @@ def main(
 
         # Grid learned likelihood data
         logp = net["density_estimator"]._log_prob(
-            grid, context=theta.expand(len(grid), -1)
+            grid, context=like_theta.expand(len(grid), -1)
         )
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
@@ -191,7 +227,7 @@ def main(
         ax[2].set_title("Learned")
 
         # Sampled data
-        data = net["density_estimator"]._sample(num_data, context=theta[None])[0]
+        data = net["density_estimator"]._sample(num_data, context=like_theta[None])[0]
         data = data.detach().numpy()
         cax1 = ax[3].scatter(
             data[:, 2],
@@ -234,5 +270,20 @@ if __name__ == "__main__":
     PARSER.add_argument(
         "--outdir", type=str, default="frames", help="Directory where images are saved"
     )
+    PARSER.add_argument(
+        "--fixed",
+        action="append",
+        nargs="+",
+        default=[],
+        help=(
+            "Fixed parameter names followed by their fixed value "
+            + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"
+        ),
+    )
     ARGS = vars(PARSER.parse_args())
-    main(ARGS["net"], outdir=ARGS["outdir"])
+    FIXED = {}
+    for PARAM in _params:
+        for FIX in ARGS["fixed"]:
+            if FIX[0] == PARAM:
+                FIXED[PARAM] = float(FIX[1])
+    main(ARGS["net"], outdir=ARGS["outdir"], fixed=FIXED)
