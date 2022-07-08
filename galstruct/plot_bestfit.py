@@ -132,14 +132,6 @@ def main(
     num_data=1000
 ):
     """
-    Generate plots of simulated data, data sampled from the learned
-    likelihood, a grid of the true likelihood, and a grid of the
-    learned likelihood for a given set of parameters and varying
-    reference azimuth. Each reference azimuth frame is saved to outdir
-    with prefix frame_*, and can be combined into a gif with:
-    ffmpeg -v 0 -i frame_%03d.png -vf palettegen -y palette.png
-    ffmpeg -v 0 -framerate 20 -loop 0 -i frame_%03d.png -i palette.png -lavfi paletteuse -y movie.gif
-
     Inputs:
       mcmc_outfile : path to mcmc pickle output
 
@@ -173,6 +165,7 @@ def main(
 
     fig, ax = plt.subplots(figsize=(8,12))    
     
+    # Get synthetic data
     num_spirals = len(_default_az0)
     q = _spiral_params[:num_spirals]
     thetas = [
@@ -197,6 +190,7 @@ def main(
             for theta, qi in zip(thetas, q)
         )
     ).float()
+    
     ax.scatter(data[:,2],np.rad2deg(data[:,0]),alpha=0.3)
     # DEFAULT PARAMS
     for i in range(bf_params_az0s.size):
@@ -281,6 +275,8 @@ def main(
             bf_params["warp_off"],
             Rref=Rref,
         )
+        
+        
         bf_diff_glong = np.diff(bf_glong.detach().numpy())
         bf_diff_vlsr = np.diff(bf_vlsr.detach().numpy())
         bf_idx = np.where(bf_diff_glong>=np.pi/2)[0]+1
