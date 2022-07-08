@@ -3,9 +3,7 @@
 """
 plot_bestfit.py
 
-Generate plots of simulated data, data sampled from the learned
-likelihood, a grid of the true likelihood, and a grid of the
-learned likelihood.
+Plots best fit model from MCMC simulation versus the default model. 
 
 Copyright(C) 2020-2022 by Trey Wenger <tvwenger@gmail.com>
 
