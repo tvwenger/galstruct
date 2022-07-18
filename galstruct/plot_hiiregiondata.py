@@ -30,7 +30,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-import pandas
+import sqlite3
+from astropy.io import fits
 
 from galstruct.model.simulator import simulator
 from galstruct.model.likelihood import log_like
