@@ -33,7 +33,7 @@ def main(db='/data/hii_v1_20200910.db'):
         # (i.e. not GBT HRDS and not SHRDS)
         #
         cur.execute('''
-        SELECT cat.gname,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far FROM Detections det
+        SELECT cat.gname,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far,dis.near FROM Detections det
         INNER JOIN CatalogDetections catdet on catdet.detection_id = det.id 
         INNER JOIN Catalog cat on catdet.catalog_id = cat.id
         INNER JOIN Distances_Reid2019 dis on dis.catalog_id = cat.id 
@@ -43,7 +43,7 @@ def main(db='/data/hii_v1_20200910.db'):
         GROUP BY cat.gname, det.component
         ''')
         prehrds = np.array(cur.fetchall(),
-                           dtype=[('gname', 'U15'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'), ('far','f8')])
+                           dtype=[('gname', 'U15'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'), ('far','f8'),('near','f8')])
         print("{0} Pre-HRDS Detections".format(len(prehrds)))
         print(
             "{0} Pre-HRDS Detections with unique GName".format(len(np.unique(prehrds['gname']))))
@@ -52,7 +52,7 @@ def main(db='/data/hii_v1_20200910.db'):
         # Get HII regions discovered by HRDS
         #
         cur.execute('''
-        SELECT cat.gname,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far FROM Detections det
+        SELECT cat.gname,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far,dis.near FROM Detections det
         INNER JOIN CatalogDetections catdet on catdet.detection_id = det.id 
         INNER JOIN Catalog cat on catdet.catalog_id = cat.id
         INNER JOIN Distances_Reid2019 dis on dis.catalog_id = cat.id
@@ -61,7 +61,7 @@ def main(db='/data/hii_v1_20200910.db'):
         GROUP BY cat.gname, det.component
         ''')
         hrds = np.array(cur.fetchall(),
-                        dtype=[('gname', 'U15'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'), ('far','f8')])
+                        dtype=[('gname', 'U15'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'), ('far','f8'),('near','f8')])
         # remove any sources in previously-known
         good = np.array([gname not in prehrds['gname']
                          for gname in hrds['gname']])
@@ -75,7 +75,7 @@ def main(db='/data/hii_v1_20200910.db'):
         # Limit to stacked detection with highest line_snr
         #
         cur.execute('''
-        SELECT cat.gname,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far FROM Detections det 
+        SELECT cat.gname,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far,dis.near FROM Detections det 
         INNER JOIN CatalogDetections catdet on catdet.detection_id = det.id 
         INNER JOIN Catalog cat on catdet.catalog_id = cat.id
         INNER JOIN Distances_Reid2019 dis on dis.catalog_id = cat.id
@@ -85,7 +85,7 @@ def main(db='/data/hii_v1_20200910.db'):
         GROUP BY cat.gname, det.component HAVING MAX(det.line_snr) ORDER BY cat.gname
         ''')
         shrds_full = np.array(cur.fetchall(),
-                              dtype=[('gname', 'U15'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'),('far','f8')])
+                              dtype=[('gname', 'U15'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'),('far','f8'),('near','f8')])
         # remove any sources in previously-known or GBT HRDS
         good = np.array([(gname not in prehrds['gname']) and (gname not in hrds['gname'])
                          for gname in shrds_full['gname']])
@@ -156,42 +156,47 @@ def main(db='/data/hii_v1_20200910.db'):
     
     # ---------- MAKE SPIRAL PLOT -------------
     # Convert (galactic longitude, galactic latitude, galactocentric distance) to galactic coordinates distance
-    prehrds_d_gal = [ convert_galcen_radius_to_gal_radius(prehrds['glong'][i]*u.degree,prehrds['glat'][i]*u.degree,prehrds['Rgal'][i]*u.kpc) for i in range(prehrds['glong'].size)]
-    
-    # Make astropy coordinates object with the three galactic coordinates
-    prehrds_coords = apycoords.Galactic(l=prehrds['glong']*u.degree,b=prehrds['glat']*u.degree,distance=prehrds['far']*u.kpc)
-    
-    # Convert galactic coordinates to spherical galactocentric coordinates
-    prehrds_galcen= apycoords.cartesian_to_spherical(prehrds_coords.transform_to(apycoords.Galactocentric()).x,
-                                                     prehrds_coords.transform_to(apycoords.Galactocentric()).y,
-                                                     prehrds_coords.transform_to(apycoords.Galactocentric()).z)
-    prehrds_dis,prehrds_lat,prehrds_long = prehrds_galcen
-    
-    # Same calculation for HRDS
-    hrds_d_gal = [ convert_galcen_radius_to_gal_radius(hrds['glong'][i]*u.degree,hrds['glat'][i]*u.degree,hrds['Rgal'][i]*u.kpc) for i in range(hrds['glong'].size)]
-    hrds_coords = apycoords.Galactic(l=hrds['glong']*u.degree,b=hrds['glat']*u.degree,distance=hrds['far']*u.kpc)
-    hrds_galcen= apycoords.cartesian_to_spherical(hrds_coords.transform_to(apycoords.Galactocentric()).x,
-                                                  hrds_coords.transform_to(apycoords.Galactocentric()).y,
-                                                  hrds_coords.transform_to(apycoords.Galactocentric()).z)
-    hrds_dis,hrds_lat,hrds_long = hrds_galcen
-    
-    shrds_d_gal = [ convert_galcen_radius_to_gal_radius(shrds_full['glong'][i]*u.degree,shrds_full['glat'][i]*u.degree,shrds_full['Rgal'][i]*u.kpc) for i in range(shrds_full['glong'].size)]
-    shrds_coords = apycoords.Galactic(l=shrds_full['glong']*u.degree,b=shrds_full['glat']*u.degree,distance=shrds_full['far']*u.kpc)
-    shrds_galcen= apycoords.cartesian_to_spherical(shrds_coords.transform_to(apycoords.Galactocentric()).x,
-                                                   shrds_coords.transform_to(apycoords.Galactocentric()).y,
-                                                   shrds_coords.transform_to(apycoords.Galactocentric()).z)
-    shrds_dis,shrds_lat,shrds_long = shrds_galcen
+    prehrds_glat = np.cos(np.deg2rad(prehrds['glat']))
+    hrds_glat = np.cos(np.deg2rad(hrds['glat']))
+    shrds_glat = np.cos(np.deg2rad(shrds_full['glat']))
+    prehrds_x, prehrds_y = prehrds['far']*np.cos(np.deg2rad(prehrds['glong']))-R0.to_value('kpc')*prehrds_glat,       prehrds['far']*np.sin(np.deg2rad(prehrds['glong']))*prehrds_glat
+    hrds_x, hrds_y       = hrds['far']*np.cos(np.deg2rad(hrds['glong']))-R0.to_value('kpc')*hrds_glat,                hrds['far']*np.sin(np.deg2rad(hrds['glong']))*hrds_glat
+    shrds_x, shrds_y     = shrds_full['far']*np.cos(np.deg2rad(shrds_full['glong']))-R0.to_value('kpc')*shrds_glat,   shrds_full['far']*np.sin(np.deg2rad(shrds_full['glong']))*shrds_glat
     
     # Plot HII region data
     fig2 = plt.figure(figsize=(10,10))
-    ax2 = fig2.add_subplot(111,projection='polar')
+    ax2 = fig2.add_subplot(111)
     
-    ax2.plot(prehrds_long,prehrds_dis,'ko',markersize=2)
-    ax2.plot(hrds_long,hrds_dis,'md',markersize=2)
-    ax2.plot(shrds_long,shrds_dis,'gs',markersize=2)
-    
-    plt.savefig('plots/spiral_allhrds.pdf')
+    ax2.plot(prehrds_x*u.kpc, prehrds_y*u.kpc,'ko',markersize=2,label="pre-HRDS")
+    ax2.plot(hrds_x*u.kpc,    hrds_y*u.kpc,'md',markersize=2,label="HRDS")
+    ax2.plot(shrds_x*u.kpc,   shrds_y*u.kpc,'gs',markersize=2,label="SHRDS")
+    plt.xlim(-40,40)
+    plt.ylim(-40,40)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend()
+    plt.savefig('plots/spiral_allhrds_FAR.pdf')
     plt.close(fig2)
+    
+    prehrds_x2, prehrds_y2 = prehrds['near']*np.cos(np.deg2rad(prehrds['glong']))-R0.to_value('kpc')*prehrds_glat,        prehrds['near']*np.sin(np.deg2rad(prehrds['glong']))*prehrds_glat
+    hrds_x2, hrds_y2       = hrds['near']*np.cos(np.deg2rad(hrds['glong']))-R0.to_value('kpc')*hrds_glat,                 hrds['near']*np.sin(np.deg2rad(hrds['glong']))*hrds_glat
+    shrds_x2, shrds_y2     = shrds_full['near']*np.cos(np.deg2rad(shrds_full['glong']))-R0.to_value('kpc')*shrds_glat,    shrds_full['near']*np.sin(np.deg2rad(shrds_full['glong']))*shrds_glat
+    
+    # Plot HII region data
+    fig3 = plt.figure(figsize=(10,10))
+    ax3 = fig3.add_subplot(111)
+    
+    ax3.plot(prehrds_x2*u.kpc,prehrds_y2*u.kpc,'ko',markersize=2,label='pre-HRDS')
+    ax3.plot(hrds_x2*u.kpc,   hrds_y2*u.kpc,'md',markersize=2,label='HRDS')
+    ax3.plot(shrds_x2*u.kpc,  shrds_y2*u.kpc,'gs',markersize=2,label='SHRDS')
+    
+    plt.xlim(-20,20)
+    plt.ylim(-20,20)
+    plt.xlabel("x")
+    plt.legend()
+    plt.ylabel("y")
+    plt.savefig('plots/spiral_allhrds_NEAR.pdf')
+    plt.close(fig3)
     
     
     # ------------MAKE LV PLOT -----------------
