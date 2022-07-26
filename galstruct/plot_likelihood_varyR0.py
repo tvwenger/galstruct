@@ -1,11 +1,16 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-plot_likelihoods.py
+plot_likelihood_varyR0.py
 
-Generate plots of simulated data, data sampled from the learned
+Generate animation (varying R0 values) of simulated data, data sampled from the learned
 likelihood, a grid of the true likelihood, and a grid of the
 learned likelihood.
+
+Each R0 frame is saved to outdir
+with prefix frame_*, and can be combined into a gif with:
+ffmpeg -v 0 -i frame_%03d.png -vf palettegen -y palette.png
+ffmpeg -v 0 -framerate 20 -loop 0 -i frame_%03d.png -i palette.png -lavfi paletteuse -y movie.gif
 
 Copyright(C) 2020-2022 by Trey Wenger <tvwenger@gmail.com>
 

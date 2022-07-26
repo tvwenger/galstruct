@@ -176,6 +176,7 @@ def main(
         )
         for i in range(num_spirals)
     ]
+    # Data formatted as (glong, glat, vlsr)
     data = torch.cat(
         tuple(
             simulator(

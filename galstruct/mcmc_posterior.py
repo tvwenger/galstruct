@@ -31,6 +31,7 @@ import numpy as np
 import argparse
 import pickle
 import dill
+import sqlite3
 
 import aesara
 import aesara.tensor as at
@@ -230,6 +231,7 @@ def main(
     fixed=_FIXED,
     outliers=_OUTLIERS,
     overwrite=_OVERWRITE,
+    hiidb='/data/hii_v2_20201203.db'
 ):
     """
     Use MCMC to generate spiral model posteriors for real or
@@ -327,8 +329,127 @@ def main(
             )
         ).float()
     else:
-        raise NotImplementedError("synthetic data only")
-
+        print("Opening HII Region data from {}".format(db))
+        
+        with sqlite3.connect(db) as conn:
+            cur = conn.cursor()
+            cur.execute('PRAGMA foreign_keys = ON')
+            #
+            # Get previously-known HII Regions
+            # (i.e. not GBT HRDS and not SHRDS)
+            #
+            cur.execute('''
+            SELECT cat.gname,cat.kdar,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far,dis.near,dis.tangent FROM Detections det
+            INNER JOIN CatalogDetections catdet on catdet.detection_id = det.id 
+            INNER JOIN Catalog cat on catdet.catalog_id = cat.id
+            INNER JOIN Distances_Reid2019 dis on dis.catalog_id = cat.id 
+            WHERE det.vlsr IS NOT NULL AND det.source = "WISE Catalog" AND cat.kdar IS NOT NULL
+            AND NOT INSTR(det.author, "Anderson") AND NOT INSTR(det.author, "Brown") AND NOT INSTR(det.author, "Wenger")
+            AND dis.Rgal IS NOT NULL
+            GROUP BY cat.gname, det.component
+            ''')
+            prehrds = np.array(cur.fetchall(),
+                            dtype=[('gname', 'U15'), ('kdar','U1'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'), ('far','f8'),('near','f8'),('tangent','f8')])
+            print("{0} Pre-HRDS Detections".format(len(prehrds)))
+            print(
+                "{0} Pre-HRDS Detections with unique GName".format(len(np.unique(prehrds['gname']))))
+            print()
+            #
+            # Get HII regions discovered by HRDS
+            #
+            cur.execute('''
+            SELECT cat.gname,cat.kdar,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far,dis.near,dis.tangent FROM Detections det
+            INNER JOIN CatalogDetections catdet on catdet.detection_id = det.id 
+            INNER JOIN Catalog cat on catdet.catalog_id = cat.id
+            INNER JOIN Distances_Reid2019 dis on dis.catalog_id = cat.id 
+            WHERE det.vlsr IS NOT NULL AND det.source = 'WISE Catalog' AND INSTR(det.author, "Anderson")
+            AND dis.Rgal IS NOT NULL AND cat.kdar IS NOT NULL
+            GROUP BY cat.gname, det.component
+            ''')
+            hrds = np.array(cur.fetchall(),
+                            dtype=[('gname', 'U15'), ('kdar','U1'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'), ('far','f8'),('near','f8'),('tangent','f8')])
+            # remove any sources in previously-known
+            good = np.array([gname not in prehrds['gname']
+                            for gname in hrds['gname']])
+            hrds = hrds[good]
+            print("{0} HRDS Detections".format(len(hrds)))
+            print("{0} HRDS Detections with unique GName".format(
+                len(np.unique(hrds['gname']))))
+            print()
+            #
+            # Get HII regions discovered by SHRDS Full Catalog
+            # Limit to stacked detection with highest line_snr
+            #
+            cur.execute('''
+            SELECT cat.gname,cat.kdar,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far,dis.near,dis.tangent FROM Detections det 
+            INNER JOIN CatalogDetections catdet on catdet.detection_id = det.id 
+            INNER JOIN Catalog cat on catdet.catalog_id = cat.id
+            INNER JOIN Distances_Reid2019 dis on dis.catalog_id = cat.id
+            WHERE det.vlsr IS NOT NULL AND 
+            ((det.source="SHRDS Full Catalog" AND det.lines="H88-H112") OR (det.source="SHRDS Pilot" AND det.lines="HS"))
+            AND dis.Rgal IS NOT NULL AND cat.kdar IS NOT NULL
+            GROUP BY cat.gname, det.component HAVING MAX(det.line_snr) ORDER BY cat.gname
+            ''')
+            shrds_full = np.array(cur.fetchall(),
+                                dtype=[('gname', 'U15'), ('kdar','U1'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'),('far','f8'),('near','f8'),('tangent','f8')])
+            # remove any sources in previously-known or GBT HRDS
+            good = np.array([(gname not in prehrds['gname']) and (gname not in hrds['gname'])
+                            for gname in shrds_full['gname']])
+            shrds_full = shrds_full[good]
+            print("{0} SHRDS Full Catalog Detections".format(len(shrds_full)))
+            print("{0} SHRDS Full Catalog Detections with unique GName".format(
+                len(np.unique(shrds_full['gname']))))
+            print()
+            print("{0} Total Detections".format(
+                len(prehrds)+len(hrds)+len(shrds_full)))
+            print("{0} Total Detections with unique GName".format(len(np.unique(
+                np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname']))))))
+            print()
+            #
+            # Get all WISE Catalog objects
+            #
+            cur.execute('''
+            SELECT cat.gname, cat.catalog  FROM Catalog cat
+            ''')
+            wise = np.array(cur.fetchall(),
+                            dtype=[('gname', 'U15'), ('catalog', 'U1')])
+            #
+            # Get all continuum detections without RRL detections
+            #
+            cur.execute('''
+            SELECT cat.gname, det.cont, det.vlsr, COALESCE(det.line_snr, 1.0) AS snr FROM Detections det
+            INNER JOIN CatalogDetections catdet ON catdet.detection_id = det.id
+            INNER JOIN Catalog cat ON catdet.catalog_id = cat.id
+            WHERE det.source = 'SHRDS Full Catalog' AND det.lines = 'H88-H112'
+            AND cat.catalog = 'Q'
+            GROUP BY cat.gname HAVING MAX(snr)
+            ''')
+            wise_quiet = np.array(cur.fetchall(),
+                                dtype=[('gname', 'U15'), ('cont', 'f8'), ('vlsr', 'f8'), ('snr', 'f8')])
+            #
+            # Count known
+            #
+            not_quiet = np.sum(np.isnan(wise_quiet['vlsr']))
+            print("SHRDS found continuum emission but no RRL emission toward {0} sources".format(
+                not_quiet))
+            known = np.sum(wise['catalog'] == 'K')+len(set(wise['gname'][wise['catalog'] != 'K']
+                                                        ).intersection(np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname']))))
+            candidate = np.sum(wise['catalog'] == 'C') - len(set(wise['gname'][wise['catalog'] == 'C']).intersection(
+                np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname'])))) + not_quiet
+            quiet = np.sum(wise['catalog'] == 'Q') - len(set(wise['gname'][wise['catalog'] == 'Q']).intersection(
+                np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname'])))) - not_quiet
+            group = np.sum(wise['catalog'] == 'G') - len(set(wise['gname'][wise['catalog'] == 'G']
+                                                            ).intersection(np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname']))))
+            print("Now WISE Catalog containers:")
+            print("{0} known".format(known))
+            print("{0} candidate".format(candidate))
+            print("{0} quiet".format(quiet))
+            print("{0} group".format(group))
+            glongs = torch.cat([torch.tensor(prehrds["glong"]),torch.tensor(hrds['glong']),torch.tensor(shrds_full['glong'])])
+            glats = torch.cat([torch.tensor(prehrds["glat"]),torch.tensor(hrds['glat']),torch.tensor(shrds_full['glat'])])
+            vlsrs = torch.cat([torch.tensor(prehrds["vlsr"]),torch.tensor(hrds['vlsr']),torch.tensor(shrds_full['vlsr'])])
+            data= torch.stack((glongs, glats, vlsrs)).T.float()
+            
     # Get likelihood neural network object
     with open(loglike_net, "rb") as f:
         net = pickle.load(f)
@@ -452,6 +573,7 @@ if __name__ == "__main__":
         "dbfile",
         type=str,
         help="The HII region catalog database filename. If 'synthetic', generate synthetic data.",
+        default="data/hii_v2_20201203.db"
     )
     PARSER.add_argument(
         "outfile",

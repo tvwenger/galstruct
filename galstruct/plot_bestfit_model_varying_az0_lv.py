@@ -3,7 +3,8 @@
 """
 plot_bestfit.py
 
-Plots best fit model from MCMC simulation versus the default model. 
+Plots best fit model from mcmc output, but change az0 to see
+how the curves change with varying az0
 
 Copyright(C) 2020-2022 by Trey Wenger <tvwenger@gmail.com>
 
