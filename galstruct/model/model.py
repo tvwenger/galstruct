@@ -28,7 +28,7 @@ Trey Wenger - May 2022 - Formatting
 import torch as tt
 
 from . import rotcurve
-from . import transforms
+from .model import transforms
 
 
 def model_vlsr(
