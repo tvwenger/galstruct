@@ -64,8 +64,8 @@ _params = [
 
 # values held as constant for each parameter
 _THETA = [
-    0.25, # pitch
-    5.0, # sigmaV
+    0.25,  # pitch
+    5.0,  # sigmaV
     0.5,
     0.1,
     8.166,
@@ -124,7 +124,7 @@ def main(
     """
     if not os.path.isdir(outdir):
         os.mkdir(outdir)
-    
+
     # keep only free params for likelihood theta
     like_theta = []
     all_theta = []
@@ -212,9 +212,7 @@ def main(
         ax[1].set_title("True")
 
         # Grid learned likelihood data
-        logp = net["density_estimator"]._log_prob(
-            grid, context=like_theta.expand(len(grid), -1)
-        )
+        logp = net["density_estimator"].log_prob(like_theta.expand(len(grid), -1), x=grid)
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
         cax3 = ax[2].imshow(
@@ -250,9 +248,7 @@ def main(
         # Add colorbars
         fig.canvas.draw_idle()
         cbar_ax1 = fig.add_axes([0.075, 0.1, 0.45, 0.025])
-        plt.colorbar(
-            cax1, cax=cbar_ax1, orientation="horizontal", label="Latitude (deg)"
-        )
+        plt.colorbar(cax1, cax=cbar_ax1, orientation="horizontal", label="Latitude (deg)")
         cbar_ax2 = fig.add_axes([0.5375, 0.1, 0.45, 0.025])
         plt.colorbar(
             cax3,
@@ -272,18 +268,13 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     PARSER.add_argument("net", type=str, help="Neural network pickle filename")
-    PARSER.add_argument(
-        "--outdir", type=str, default="frames", help="Directory where images are saved"
-    )
+    PARSER.add_argument("--outdir", type=str, default="frames", help="Directory where images are saved")
     PARSER.add_argument(
         "--fixed",
         action="append",
         nargs="+",
         default=[],
-        help=(
-            "Fixed parameter names followed by their fixed value "
-            + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"
-        ),
+        help=("Fixed parameter names followed by their fixed value " + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"),
     )
     ARGS = vars(PARSER.parse_args())
     FIXED = {}
