@@ -30,7 +30,6 @@ import torch as tt
 import numpy as np
 import matplotlib.pyplot as plt
 
-#updated script import statements, these pull from files in the same directory
 import rotcurve
 import transforms 
 from utils import (
@@ -165,7 +164,7 @@ class Model:
           dist :: scalar (kpc)
             Distance
         """
-        R = self.Rref * tt.exp((self.az0 - az) * np.tan(self.pitch))
+        R = self.Rref * tt.exp((self.az0 - az) * tt.tan(self.pitch))
         cos_az = tt.cos(az)
         sin_az = tt.sin(az)
     
