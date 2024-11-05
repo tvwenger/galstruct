@@ -31,10 +31,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #updated script import statements, these pull from files in the same directory
-#from . import rotcurve
-#from . import transforms
 import rotcurve
 import transforms 
+from utils import (
+    calc_spiral_angle,
+    calc_sigma2_glong,
+    calc_sigma2_glat,
+    calc_sigma2_vlsr,
+)
 
 class Model:
     """
@@ -43,40 +47,57 @@ class Model:
 
     #init helps us to define some default model parameters
     def __init__(self,
-                az0 = tt.tensor(np.pi), 
-                tan_pitch = tt.tensor(np.tan(np.deg2rad(14))), 
+                 
+                #these are physical parameters of the model
+                az0 = tt.tensor(np.pi),
                 R0 = tt.tensor(8.5), 
-                Usun = tt.tensor(0.0), 
-                Vsun = tt.tensor(0.0), 
-                Wsun = tt.tensor(0.0), 
-                Upec = tt.tensor(0.0), 
-                Vpec = tt.tensor(0.0), 
-                sin_tilt = tt.tensor(0.0), 
-                cos_tilt = tt.tensor(1.0), 
-                cos_roll = tt.tensor(1.0), 
-                sin_roll = tt.tensor(0.0), 
                 a2 = tt.tensor(0.95), 
-                a3= tt.tensor(1.65), 
-                theta0 = tt.tensor(220.0), 
+                a3= tt.tensor(1.65),
+                Rref = tt.tensor(8.0),
+
+                #these are the Sun's kinematic parameters in the model
+                Usun = tt.tensor(0.0),
+                Vsun = tt.tensor(0.0), 
+                Wsun = tt.tensor(0.0),
+                Zsun = tt.tensor(0.0),
+                Upec = tt.tensor(0.0), 
+                Vpec = tt.tensor(0.0),
+
+                #angular parameters dictating the shape of the spiral arms
+                pitch = tt.tensor(0.0),
+                roll = tt.tensor(0.0),
                 warp_amp = tt.tensor([0.0]), 
-                warp_off = tt.tensor([0.0]), 
-                Rref = tt.tensor(8.0)):                    
+                warp_off = tt.tensor([0.0]),
+
+                #parameters defining the spread in the spiral arms
+                sigma_arm_height = tt.tensor(0.0), 
+                sigma_arm_plane = tt.tensor(0.0),
+                sigmaV = tt.tensor(0.0)):     
+
         self.az0 = az0
-        self.tan_pitch = tan_pitch
         self.R0 = R0
-        self.Usun = self.Vsun = self.Wsun = Usun = Vsun = Wsun
-        self.Upec = self.Vpec = Upec = Vpec
-        self.sin_tilt = sin_tilt
-        self.cos_tilt = cos_tilt
-        self.cos_roll= cos_roll
-        self.sin_roll = sin_roll
         self.a2 = a2 #a2 and a3 are needed for the rotcurve_constraints function to obtain R0a22, lam, loglam, term1, and term2
         self.a3 = a3
-        self.R0a22, self.lam, self.loglam, self.term1, self.term2 = rotcurve.rotcurve_constants(self.R0, self.a2, self.a3)
-        self.theta0 = theta0
+        self.Rref = Rref
+
+        self.Usun = Usun
+        self.Vsun = Vsun
+        self.Wsun = Wsun 
+        self.Zsun = Zsun
+        self.Upec = Upec
+        self.Vpec = Vpec
+
+        self.pitch = pitch
+        self.roll = roll
         self.warp_amp = warp_amp
         self.warp_off = warp_off
-        self.Rref = Rref
+
+        #here we use some of the above defined model parameters to perform necessary calculations
+        self.tilt = tt.asin(self.Zsun / self.R0 / 1000.0)
+        self.cos_tilt, self.sin_tilt = tt.cos(self.tilt), tt.sin(self.tilt) 
+        self.cos_roll, self.sin_roll = tt.cos(self.roll), tt.sin(self.roll)
+        self.R0a22, self.lam, self.loglam, self.term1, self.term2 = rotcurve.rotcurve_constants(self.R0, self.a2, self.a3)
+        self.theta0 = rotcurve.calc_theta(self.R0, self.R0a22, self.lam, self.loglam, self.term1, self.term2)
     
     def model_vlsr(self,
         dist,
@@ -176,3 +197,26 @@ class Model:
         vlsr.sum().backward()
         dvlsr_ddist = dist.grad
         return glong, glat, vlsr, dvlsr_ddist, dist
+
+    def model_spread(self, az):
+        '''
+        This adds 3D spread to the spiral arm's structure using the following parameters:
+
+        sigmaV :: spiral FWHM velocity width (km/s)
+        sigma_arm_plane :: spiral FWHM physical width in the plane (kpc)
+        sigma_arm_height :: spiral FWHM physical width perpendicular to plane (kpc)
+        
+        '''
+        glong, glat, vlsr, dvlsr_ddist, dist = self.model(az)
+        
+        angle = calc_spiral_angle(az, dist, self.pitch, self.R0)
+        sigma2_glat = calc_sigma2_glat(dist, self.sigma_arm_height)
+        sigma2_glong = calc_sigma2_glong(dist, angle, self.sigma_arm_plane)
+        sigma2_vlsr = self.sigmaV ** 2.0 + calc_sigma2_vlsr(
+            dvlsr_ddist, angle, self.sigma_arm_plane
+        )
+        glong = glong + tt.randn_like(glong) * tt.sqrt(sigma2_glong)
+        glat = glat + tt.randn_like(glat) * tt.sqrt(sigma2_glat)
+        vlsr = vlsr + tt.randn_like(vlsr) * tt.sqrt(sigma2_vlsr)
+        
+        return tt.stack((glong, glat, vlsr)).T.detach()
