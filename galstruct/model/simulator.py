@@ -24,23 +24,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Trey Wenger - August 2020
 Trey Wenger - May 2022 - Formatting
 """
-
-import torch
-from .rotcurve import rotcurve_constants, calc_theta
-from .model import model
-from .utils import (
-    calc_spiral_angle,
-    calc_sigma2_glong,
-    calc_sigma2_glat,
-    calc_sigma2_vlsr,
-)
-
+import numpy as np
+import torch as tt
+from rotcurve import rotcurve_constants 
+from model import Model
 
 def simulator(
-    theta,
-    Rmin=torch.tensor(3.0),
-    Rmax=torch.tensor(15.0),
-    Rref=torch.tensor(8.0),
+    theta, 
+    Rmin=tt.tensor(3.0),
+    Rmax=tt.tensor(15.0),
+    Rref=tt.tensor(8.0),
     fixed={},
     disk=None,
 ):
@@ -78,13 +71,13 @@ def simulator(
         [I2, Rs, Rc].
 
     Returns: [glong, glat, vlsr]
-      [glong, glat, vlsr] :: torch.tensor
+      [glong, glat, vlsr] :: tt.tensor
         glong, glat :: scalars (radians)
           Simulated Galactic longitude and latitude
         vlsr :: scalar (km/s)
           Simulated LSR velocity
     """
-    theta = torch.atleast_2d(theta)
+    theta = tt.atleast_2d(theta)
     num_data = theta.shape[0]
 
     # Unpack spiral parameters
@@ -111,71 +104,60 @@ def simulator(
     ]
     for name in param_names:
         if name in fixed:
-            params[name] = torch.as_tensor([fixed[name] for _ in range(num_data)])
+            params[name] = tt.as_tensor([fixed[name] for _ in range(num_data)])
         else:
             params[name] = theta[:, idx]
             idx += 1
 
     # Get azimuth range, pick a random azimuth
-    min_az = params["az0"] - torch.log(Rmax / Rref) / torch.tan(params["pitch"])
-    max_az = params["az0"] - torch.log(Rmin / Rref) / torch.tan(params["pitch"])
-    spiral_az = torch.stack(
-        tuple(torch.linspace(mina, maxa, 1000) for mina, maxa in zip(min_az, max_az))
+    min_az = params["az0"] - tt.log(Rmax / Rref) / tt.tan(params["pitch"])
+    max_az = params["az0"] - tt.log(Rmin / Rref) / tt.tan(params["pitch"])
+    spiral_az = tt.stack(
+        tuple(tt.linspace(mina, maxa, 1000) for mina, maxa in zip(min_az, max_az))
     )
     if disk is not None:
         # apply exponential disk
         I2, Rs, Rc = disk
-        spiral_R = Rref * torch.exp(
-            (params["az0"][:, None] - spiral_az) * torch.tan(params["pitch"][:, None])
+        spiral_R = Rref * tt.exp(
+            (params["az0"][:, None] - spiral_az) * tt.tan(params["pitch"][:, None])
         )
-        prob = torch.exp(-spiral_R / Rs) / (1.0 + I2 * torch.exp(-spiral_R / Rc))
-        prob = prob / torch.sum(prob, axis=1, keepdims=True)
+        prob = tt.exp(-spiral_R / Rs) / (1.0 + I2 * tt.exp(-spiral_R / Rc))
+        prob = prob / tt.sum(prob, axis=1, keepdims=True)
         idx = prob.multinomial(num_samples=1)
-        az = torch.gather(spiral_az, 1, idx)[:, 0]
+        az = tt.gather(spiral_az, 1, idx)[:, 0]
     else:
-        az = torch.tensor([saz[torch.randint(len(saz), (1,))[0]] for saz in spiral_az])
+        az = tt.tensor([saz[tt.randint(len(saz), (1,))[0]] for saz in spiral_az])
 
     # Get model longitude, latitude, velocity
-    tilt = torch.asin(params["Zsun"] / params["R0"] / 1000.0)
-    cos_tilt, sin_tilt = torch.cos(tilt), torch.sin(tilt)
-    cos_roll, sin_roll = torch.cos(params["roll"]), torch.sin(params["roll"])
-    R0a22, lam, loglam, term1, term2 = rotcurve_constants(
-        params["R0"], params["a2"], params["a3"]
-    )
-    theta0 = calc_theta(params["R0"], R0a22, lam, loglam, term1, term2)
-    glong, glat, vlsr, dvlsr_ddist, dist = model(
-        az,
-        params["az0"],
-        torch.tan(params["pitch"]),
-        params["R0"],
-        params["Usun"],
-        params["Vsun"],
-        params["Wsun"],
-        params["Upec"],
-        params["Vpec"],
-        cos_tilt,
-        sin_tilt,
-        cos_roll,
-        sin_roll,
-        R0a22,
-        lam,
-        loglam,
-        term1,
-        term2,
-        theta0,
-        params["warp_amp"],
-        params["warp_off"],
-        Rref=Rref,
-    )
+    new_model = Model( 
+        #these are physical parameters of the model
+        az0 = params['az0'],
+        R0 = params['R0'], 
+        a2 = params['a2'], 
+        a3= params['a3'],
+        Rref = Rref,
 
-    # Add spread to each dimension
-    angle = calc_spiral_angle(az, dist, params["pitch"], params["R0"])
-    sigma2_glat = calc_sigma2_glat(dist, params["sigma_arm_height"])
-    sigma2_glong = calc_sigma2_glong(dist, angle, params["sigma_arm_plane"])
-    sigma2_vlsr = params["sigmaV"] ** 2.0 + calc_sigma2_vlsr(
-        dvlsr_ddist, angle, params["sigma_arm_plane"]
+        #these are the Sun's kinematic parameters in the model
+        Usun = params["Usun"], 
+        Vsun = params["Vsun"], 
+        Wsun = params["Wsun"], 
+        Zsun = params["Zsun"],
+        Upec = params["Upec"], 
+        Vpec = params["Vpec"],
+
+        #angular parameters dictating the shape of the spiral arms
+        pitch = params['pitch'],
+        roll = params['roll'],
+        warp_amp = params['warp_amp'], 
+        warp_off = params['warp_off'],
+
+        #parameters defining the spread in the spiral arms
+        sigma_arm_height = params["sigma_arm_height"], 
+        sigma_arm_plane = params["sigma_arm_plane"],
+        sigmaV = params["sigmaV"],
     )
-    glong = glong + torch.randn_like(glong) * torch.sqrt(sigma2_glong)
-    glat = glat + torch.randn_like(glat) * torch.sqrt(sigma2_glat)
-    vlsr = vlsr + torch.randn_like(vlsr) * torch.sqrt(sigma2_vlsr)
-    return torch.stack((glong, glat, vlsr)).T.detach()
+    
+    #this is a call to our Model, it will return out the final glong, glat, and vlsr for a generated HII region
+    hii_region = new_model.model_spread(az)
+
+    return hii_region
