@@ -92,6 +92,10 @@ class Model:
         self.warp_amp = warp_amp
         self.warp_off = warp_off
 
+        self.sigma_arm_height = sigma_arm_height
+        self.sigma_arm_plane = sigma_arm_plane
+        self.sigmaV = sigmaV
+
         #here we use some of the above defined model parameters to perform necessary calculations
         self.tilt = tt.asin(self.Zsun / self.R0 / 1000.0)
         self.cos_tilt, self.sin_tilt = tt.cos(self.tilt), tt.sin(self.tilt) 
@@ -161,7 +165,7 @@ class Model:
           dist :: scalar (kpc)
             Distance
         """
-        R = self.Rref * tt.exp((self.az0 - az) * self.tan_pitch)
+        R = self.Rref * tt.exp((self.az0 - az) * np.tan(self.pitch))
         cos_az = tt.cos(az)
         sin_az = tt.sin(az)
     

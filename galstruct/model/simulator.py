@@ -25,12 +25,12 @@ Trey Wenger - August 2020
 Trey Wenger - May 2022 - Formatting
 """
 import numpy as np
-import torch as tt 
-from rotcurve import rotcurve_constants   
+import torch as tt #change this import statement to import torch as tt, then have to change all these function calls
+from rotcurve import rotcurve_constants   #likely will have to change these import statements, look at model_class.ipynb for help
 from model import Model
 
 def simulator(
-    theta, 
+    theta, #is this where the real Model class call should occur? theta is really made up of all of the model parameters
     Rmin=tt.tensor(3.0),
     Rmax=tt.tensor(15.0),
     Rref=tt.tensor(8.0),
