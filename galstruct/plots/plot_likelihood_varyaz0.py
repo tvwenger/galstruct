@@ -212,7 +212,7 @@ def main(
         ax[1].set_title("True")
 
         # Grid learned likelihood data
-        logp = net["density_estimator"].log_prob(like_theta.expand(len(grid), -1), x=grid)
+        logp = net["density_estimator"].log_prob(grid[:, None, :], like_theta[None, :])
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
         cax3 = ax[2].imshow(
@@ -230,8 +230,7 @@ def main(
         ax[2].set_title("Learned")
 
         # Sampled data
-        data = net["density_estimator"]._sample(num_data, context=like_theta[None])[0]
-        data = data.detach().numpy()
+        data = net["density_estimator"].sample((num_data,), like_theta[None])[:, 0, :].detach().numpy()
         cax1 = ax[3].scatter(
             data[:, 2],
             np.rad2deg(data[:, 0]),

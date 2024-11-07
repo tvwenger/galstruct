@@ -115,10 +115,9 @@ def log_like(
     model_data, model_sigma2_data = model.model_spread(az)
 
     # Get likelihood (shape len(data), num_az)
-    print(data.shape)
-    glong_prob = tdist.Normal(model_data[0], torch.sqrt(model_sigma2_data[0]))
-    glat_prob = tdist.Normal(model_data[1], torch.sqrt(model_sigma2_data[1]))
-    vlsr_prob = tdist.Normal(model_data[2], torch.sqrt(model_sigma2_data[2]))
+    glong_prob = tdist.Normal(model_data[:, 0], torch.sqrt(model_sigma2_data[:, 0]))
+    glat_prob = tdist.Normal(model_data[:, 1], torch.sqrt(model_sigma2_data[:, 1]))
+    vlsr_prob = tdist.Normal(model_data[:, 2], params["sigmaV"])
     log_prob = glong_prob.log_prob(data[:, 0, None])
     log_prob += glat_prob.log_prob(data[:, 1, None])
     log_prob += vlsr_prob.log_prob(data[:, 2, None])

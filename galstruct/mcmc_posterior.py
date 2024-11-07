@@ -26,54 +26,35 @@ Trey Wenger - June 2022 - Updates for new pymc and aesara
 """
 
 import os
-import multiprocessing
 import numpy as np
 import argparse
 import pickle
 import dill
 import sqlite3
 
-import aesara
-import aesara.tensor as at
-
-import torch
-import pymc as pm
-
-from galstruct.model.simulator import simulator
-
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
+
+import multiprocessing
 
 try:
     multiprocessing.set_start_method("spawn")
 except RuntimeError:
     pass
 
-aesara.config.floatX = "float32"
+import pytensor
 
-np.random.seed(1234)
+pytensor.config.floatX = "float32"
+# pytensor.config.warn_float64 = "raise"
 
-# parameter order for likelihood function
-_params = [
-    "q",
-    "az0",
-    "pitch",
-    "sigmaV",
-    "sigma_arm_plane",
-    "sigma_arm_height",
-    "R0",
-    "Usun",
-    "Vsun",
-    "Wsun",
-    "Upec",
-    "Vpec",
-    "a2",
-    "a3",
-    "Zsun",
-    "roll",
-    "warp_amp",
-    "warp_off",
-]
+import torch
+import pymc as pm
+
+from galstruct.model.simulator import simulator
+
+from galstruct.likelihood_op import _params, LogLike, LogLikeCalc
+
+
 # default values for synthetic spiral parameters
 _spiral_params = [
     0.25,  # q
@@ -92,6 +73,7 @@ _spiral_params = [
     0.5,  # sigma_arm_plane
     0.1,  # sigma_arm_height
 ]
+
 # default values for GRM parameters
 _grm_params = [
     8.16643777,  # R0
@@ -105,13 +87,12 @@ _grm_params = [
     5.5,  # Zsun
     0.0,  # roll
 ]
+
 # default values for warp parameters
 _warp_params = [0.02, -0.5]  # warp_amp, warp_off
+
 # default values for exponential disk parameters
 _disk_params = [35.0, 3.0, 2.5]
-
-# set random seed
-np.random.seed(1234)
 
 # default parameter values
 _NUM_DATA = 2000
@@ -123,89 +104,10 @@ _NITER = 1000
 _NTUNE = 1000
 _NINIT = 100000
 _NUM_CHAINS = 4
-_STEP_SCALE = 0.25
 _TARGET_ACCEPT = 0.9
 _FIXED = {}
 _OUTLIERS = None
 _OVERWRITE = False
-
-
-class LogLikeCalc(torch.nn.Module):
-    def __init__(self, density_estimator, num_spirals, fixed):
-        super(LogLikeCalc, self).__init__()
-        self.density_estimator = density_estimator
-        self.num_spirals = num_spirals
-        self.free_params = []
-        for p in _params:
-            if p in fixed:
-                setattr(self, p, torch.nn.Parameter(torch.tensor(fixed[p])))
-            else:
-                if p in ["q", "az0", "pitch"]:
-                    setattr(
-                        self, p, torch.nn.Parameter(torch.tensor([0.0] * num_spirals))
-                    )
-                else:
-                    setattr(self, p, torch.nn.Parameter(torch.tensor(0.0)))
-                self.free_params.append(getattr(self, p))
-
-    def forward(self, data):
-        # parameters that do not depend on spiral
-        other_params = [getattr(self, p).reshape(1) for p in _params[3:]]
-        # stack parameters for each likelihood evaluation
-        thetas = [
-            torch.cat(
-                (
-                    self.az0[i].reshape(1),
-                    self.pitch[i].reshape(1),
-                    *other_params,
-                )
-            )
-            for i in range(self.num_spirals)
-        ]
-        # evaluate loglike for each spiral and data point.
-        logp = torch.stack(
-            [
-                self.density_estimator.log_prob(
-                    data, context=theta.expand(data.shape[0], -1)
-                )
-                for theta in thetas
-            ]
-        )
-        # catch nans
-        logp[torch.isnan(logp)] = -np.inf
-        # marginalize over spiral
-        logp = torch.logsumexp(logp + torch.log(self.q[..., None]), 0)
-        # sum over data
-        return torch.sum(logp).float()
-
-
-class LogLike(at.Op):
-    def __init__(self, loglike_calc, data):
-        self.loglike_calc = loglike_calc
-        self.data = data
-
-    def make_node(self, *args):
-        return aesara.graph.basic.Apply(
-            self, args, [at.fscalar().type()] + [a.type() for a in args]
-        )
-
-    def perform(self, node, inputs, outputs):
-        for param, value in zip(self.loglike_calc.free_params, inputs):
-            param.data = torch.tensor(value)
-            if param.grad is not None:
-                param.grad.detach_()
-                param.grad.zero_()
-
-        # evaluate likelihood and gradients
-        loglike = self.loglike_calc(self.data)
-        loglike.backward()
-
-        outputs[0][0] = loglike.detach().numpy()
-        for i, param in enumerate(self.loglike_calc.free_params):
-            outputs[i + 1][0] = param.grad.detach().numpy()
-
-    def grad(self, inputs, gradients):
-        return [gradients[0] * d for d in self(*inputs)[1:]]
 
 
 def main(
@@ -226,12 +128,11 @@ def main(
     ntune=_NTUNE,
     ninit=_NINIT,
     num_chains=_NUM_CHAINS,
-    step_scale=_STEP_SCALE,
     target_accept=_TARGET_ACCEPT,
     fixed=_FIXED,
     outliers=_OUTLIERS,
     overwrite=_OVERWRITE,
-    hiidb='/data/hii_v2_20201203.db'
+    hiidb="/data/hii_v2_20201203.db",
 ):
     """
     Use MCMC to generate spiral model posteriors for real or
@@ -285,9 +186,6 @@ def main(
         Number of ADVI initialization samples
       num_chains :: integer
         Number of Markov chains
-      step_scale :: scalar
-        Starting NUTS step_scale. Starting step_size is:
-        step_scale / ndim**0.25
       target_accept :: scalar
         Desired acceptance rate (0 to 1)
       fixed :: dictionary
@@ -330,15 +228,16 @@ def main(
         ).float()
     else:
         print("Opening HII Region data from {}".format(db))
-        
+
         with sqlite3.connect(db) as conn:
             cur = conn.cursor()
-            cur.execute('PRAGMA foreign_keys = ON')
+            cur.execute("PRAGMA foreign_keys = ON")
             #
             # Get previously-known HII Regions
             # (i.e. not GBT HRDS and not SHRDS)
             #
-            cur.execute('''
+            cur.execute(
+                """
             SELECT cat.gname,cat.kdar,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far,dis.near,dis.tangent FROM Detections det
             INNER JOIN CatalogDetections catdet on catdet.detection_id = det.id 
             INNER JOIN Catalog cat on catdet.catalog_id = cat.id
@@ -347,17 +246,32 @@ def main(
             AND NOT INSTR(det.author, "Anderson") AND NOT INSTR(det.author, "Brown") AND NOT INSTR(det.author, "Wenger")
             AND dis.Rgal IS NOT NULL
             GROUP BY cat.gname, det.component
-            ''')
-            prehrds = np.array(cur.fetchall(),
-                            dtype=[('gname', 'U15'), ('kdar','U1'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'), ('far','f8'),('near','f8'),('tangent','f8')])
+            """
+            )
+            prehrds = np.array(
+                cur.fetchall(),
+                dtype=[
+                    ("gname", "U15"),
+                    ("kdar", "U1"),
+                    ("glong", "f8"),
+                    ("glat", "f8"),
+                    ("vlsr", "f8"),
+                    ("radius", "f8"),
+                    ("author", "U100"),
+                    ("Rgal", "f8"),
+                    ("far", "f8"),
+                    ("near", "f8"),
+                    ("tangent", "f8"),
+                ],
+            )
             print("{0} Pre-HRDS Detections".format(len(prehrds)))
-            print(
-                "{0} Pre-HRDS Detections with unique GName".format(len(np.unique(prehrds['gname']))))
+            print("{0} Pre-HRDS Detections with unique GName".format(len(np.unique(prehrds["gname"]))))
             print()
             #
             # Get HII regions discovered by HRDS
             #
-            cur.execute('''
+            cur.execute(
+                """
             SELECT cat.gname,cat.kdar,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far,dis.near,dis.tangent FROM Detections det
             INNER JOIN CatalogDetections catdet on catdet.detection_id = det.id 
             INNER JOIN Catalog cat on catdet.catalog_id = cat.id
@@ -365,22 +279,36 @@ def main(
             WHERE det.vlsr IS NOT NULL AND det.source = 'WISE Catalog' AND INSTR(det.author, "Anderson")
             AND dis.Rgal IS NOT NULL AND cat.kdar IS NOT NULL
             GROUP BY cat.gname, det.component
-            ''')
-            hrds = np.array(cur.fetchall(),
-                            dtype=[('gname', 'U15'), ('kdar','U1'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'), ('far','f8'),('near','f8'),('tangent','f8')])
+            """
+            )
+            hrds = np.array(
+                cur.fetchall(),
+                dtype=[
+                    ("gname", "U15"),
+                    ("kdar", "U1"),
+                    ("glong", "f8"),
+                    ("glat", "f8"),
+                    ("vlsr", "f8"),
+                    ("radius", "f8"),
+                    ("author", "U100"),
+                    ("Rgal", "f8"),
+                    ("far", "f8"),
+                    ("near", "f8"),
+                    ("tangent", "f8"),
+                ],
+            )
             # remove any sources in previously-known
-            good = np.array([gname not in prehrds['gname']
-                            for gname in hrds['gname']])
+            good = np.array([gname not in prehrds["gname"] for gname in hrds["gname"]])
             hrds = hrds[good]
             print("{0} HRDS Detections".format(len(hrds)))
-            print("{0} HRDS Detections with unique GName".format(
-                len(np.unique(hrds['gname']))))
+            print("{0} HRDS Detections with unique GName".format(len(np.unique(hrds["gname"]))))
             print()
             #
             # Get HII regions discovered by SHRDS Full Catalog
             # Limit to stacked detection with highest line_snr
             #
-            cur.execute('''
+            cur.execute(
+                """
             SELECT cat.gname,cat.kdar,det.glong,det.glat,det.vlsr,cat.radius,det.author,dis.Rgal,dis.far,dis.near,dis.tangent FROM Detections det 
             INNER JOIN CatalogDetections catdet on catdet.detection_id = det.id 
             INNER JOIN Catalog cat on catdet.catalog_id = cat.id
@@ -389,67 +317,113 @@ def main(
             ((det.source="SHRDS Full Catalog" AND det.lines="H88-H112") OR (det.source="SHRDS Pilot" AND det.lines="HS"))
             AND dis.Rgal IS NOT NULL AND cat.kdar IS NOT NULL
             GROUP BY cat.gname, det.component HAVING MAX(det.line_snr) ORDER BY cat.gname
-            ''')
-            shrds_full = np.array(cur.fetchall(),
-                                dtype=[('gname', 'U15'), ('kdar','U1'), ('glong', 'f8'), ('glat', 'f8'), ('vlsr', 'f8'), ('radius', 'f8'), ('author', 'U100'), ('Rgal', 'f8'),('far','f8'),('near','f8'),('tangent','f8')])
+            """
+            )
+            shrds_full = np.array(
+                cur.fetchall(),
+                dtype=[
+                    ("gname", "U15"),
+                    ("kdar", "U1"),
+                    ("glong", "f8"),
+                    ("glat", "f8"),
+                    ("vlsr", "f8"),
+                    ("radius", "f8"),
+                    ("author", "U100"),
+                    ("Rgal", "f8"),
+                    ("far", "f8"),
+                    ("near", "f8"),
+                    ("tangent", "f8"),
+                ],
+            )
             # remove any sources in previously-known or GBT HRDS
-            good = np.array([(gname not in prehrds['gname']) and (gname not in hrds['gname'])
-                            for gname in shrds_full['gname']])
+            good = np.array(
+                [(gname not in prehrds["gname"]) and (gname not in hrds["gname"]) for gname in shrds_full["gname"]]
+            )
             shrds_full = shrds_full[good]
             print("{0} SHRDS Full Catalog Detections".format(len(shrds_full)))
-            print("{0} SHRDS Full Catalog Detections with unique GName".format(
-                len(np.unique(shrds_full['gname']))))
+            print("{0} SHRDS Full Catalog Detections with unique GName".format(len(np.unique(shrds_full["gname"]))))
             print()
-            print("{0} Total Detections".format(
-                len(prehrds)+len(hrds)+len(shrds_full)))
-            print("{0} Total Detections with unique GName".format(len(np.unique(
-                np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname']))))))
+            print("{0} Total Detections".format(len(prehrds) + len(hrds) + len(shrds_full)))
+            print(
+                "{0} Total Detections with unique GName".format(
+                    len(np.unique(np.concatenate((prehrds["gname"], hrds["gname"], shrds_full["gname"]))))
+                )
+            )
             print()
             #
             # Get all WISE Catalog objects
             #
-            cur.execute('''
+            cur.execute(
+                """
             SELECT cat.gname, cat.catalog  FROM Catalog cat
-            ''')
-            wise = np.array(cur.fetchall(),
-                            dtype=[('gname', 'U15'), ('catalog', 'U1')])
+            """
+            )
+            wise = np.array(cur.fetchall(), dtype=[("gname", "U15"), ("catalog", "U1")])
             #
             # Get all continuum detections without RRL detections
             #
-            cur.execute('''
+            cur.execute(
+                """
             SELECT cat.gname, det.cont, det.vlsr, COALESCE(det.line_snr, 1.0) AS snr FROM Detections det
             INNER JOIN CatalogDetections catdet ON catdet.detection_id = det.id
             INNER JOIN Catalog cat ON catdet.catalog_id = cat.id
             WHERE det.source = 'SHRDS Full Catalog' AND det.lines = 'H88-H112'
             AND cat.catalog = 'Q'
             GROUP BY cat.gname HAVING MAX(snr)
-            ''')
-            wise_quiet = np.array(cur.fetchall(),
-                                dtype=[('gname', 'U15'), ('cont', 'f8'), ('vlsr', 'f8'), ('snr', 'f8')])
+            """
+            )
+            wise_quiet = np.array(
+                cur.fetchall(), dtype=[("gname", "U15"), ("cont", "f8"), ("vlsr", "f8"), ("snr", "f8")]
+            )
             #
             # Count known
             #
-            not_quiet = np.sum(np.isnan(wise_quiet['vlsr']))
-            print("SHRDS found continuum emission but no RRL emission toward {0} sources".format(
-                not_quiet))
-            known = np.sum(wise['catalog'] == 'K')+len(set(wise['gname'][wise['catalog'] != 'K']
-                                                        ).intersection(np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname']))))
-            candidate = np.sum(wise['catalog'] == 'C') - len(set(wise['gname'][wise['catalog'] == 'C']).intersection(
-                np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname'])))) + not_quiet
-            quiet = np.sum(wise['catalog'] == 'Q') - len(set(wise['gname'][wise['catalog'] == 'Q']).intersection(
-                np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname'])))) - not_quiet
-            group = np.sum(wise['catalog'] == 'G') - len(set(wise['gname'][wise['catalog'] == 'G']
-                                                            ).intersection(np.concatenate((prehrds['gname'], hrds['gname'], shrds_full['gname']))))
+            not_quiet = np.sum(np.isnan(wise_quiet["vlsr"]))
+            print("SHRDS found continuum emission but no RRL emission toward {0} sources".format(not_quiet))
+            known = np.sum(wise["catalog"] == "K") + len(
+                set(wise["gname"][wise["catalog"] != "K"]).intersection(
+                    np.concatenate((prehrds["gname"], hrds["gname"], shrds_full["gname"]))
+                )
+            )
+            candidate = (
+                np.sum(wise["catalog"] == "C")
+                - len(
+                    set(wise["gname"][wise["catalog"] == "C"]).intersection(
+                        np.concatenate((prehrds["gname"], hrds["gname"], shrds_full["gname"]))
+                    )
+                )
+                + not_quiet
+            )
+            quiet = (
+                np.sum(wise["catalog"] == "Q")
+                - len(
+                    set(wise["gname"][wise["catalog"] == "Q"]).intersection(
+                        np.concatenate((prehrds["gname"], hrds["gname"], shrds_full["gname"]))
+                    )
+                )
+                - not_quiet
+            )
+            group = np.sum(wise["catalog"] == "G") - len(
+                set(wise["gname"][wise["catalog"] == "G"]).intersection(
+                    np.concatenate((prehrds["gname"], hrds["gname"], shrds_full["gname"]))
+                )
+            )
             print("Now WISE Catalog containers:")
             print("{0} known".format(known))
             print("{0} candidate".format(candidate))
             print("{0} quiet".format(quiet))
             print("{0} group".format(group))
-            glongs = torch.cat([torch.tensor(prehrds["glong"]),torch.tensor(hrds['glong']),torch.tensor(shrds_full['glong'])])
-            glats = torch.cat([torch.tensor(prehrds["glat"]),torch.tensor(hrds['glat']),torch.tensor(shrds_full['glat'])])
-            vlsrs = torch.cat([torch.tensor(prehrds["vlsr"]),torch.tensor(hrds['vlsr']),torch.tensor(shrds_full['vlsr'])])
-            data= torch.stack((glongs, glats, vlsrs)).T.float()
-            
+            glongs = torch.cat(
+                [torch.tensor(prehrds["glong"]), torch.tensor(hrds["glong"]), torch.tensor(shrds_full["glong"])]
+            )
+            glats = torch.cat(
+                [torch.tensor(prehrds["glat"]), torch.tensor(hrds["glat"]), torch.tensor(shrds_full["glat"])]
+            )
+            vlsrs = torch.cat(
+                [torch.tensor(prehrds["vlsr"]), torch.tensor(hrds["vlsr"]), torch.tensor(shrds_full["vlsr"])]
+            )
+            data = torch.stack((glongs, glats, vlsrs)).T.float()
+
     # Get likelihood neural network object
     with open(loglike_net, "rb") as f:
         net = pickle.load(f)
@@ -472,7 +446,7 @@ def main(
                 if num > 1:
                     determ[param] = pm.Dirichlet(
                         param,
-                        a=np.ones(num),
+                        a=np.ones(num).astype(np.float32),
                     )
                 else:
                     fixed[param] = np.array([1.0])
@@ -484,8 +458,8 @@ def main(
                     upper = upper[0]
                 determ[param] = pm.Uniform(
                     param,
-                    lower=lower,
-                    upper=upper,
+                    lower=lower.astype(np.float32),
+                    upper=upper.astype(np.float32),
                     shape=shape,
                 )
             elif priors[param][0] == "normal":
@@ -496,8 +470,8 @@ def main(
                     sigma = sigma[0]
                 determ[param] = pm.Normal(
                     param,
-                    mu=mean,
-                    sigma=sigma,
+                    mu=mean.astype(np.float32),
+                    sigma=sigma.astype(np.float32),
                     shape=shape,
                 )
             elif priors[param][0] == "cauchy":
@@ -508,8 +482,8 @@ def main(
                     beta = beta[0]
                 determ[param] = pm.Cauchy(
                     param,
-                    alpha=alpha,
-                    beta=beta,
+                    alpha=alpha.astype(np.float32),
+                    beta=beta.astype(np.float32),
                     shape=shape,
                 )
             elif priors[param][0] == "halfnormal":
@@ -518,7 +492,7 @@ def main(
                     sigma = sigma[0]
                 determ[param] = pm.HalfNormal(
                     param,
-                    sigma=sigma,
+                    sigma=sigma.astype(np.float32),
                     shape=shape,
                 )
             elif priors[param][0] == "halfcauchy":
@@ -527,13 +501,11 @@ def main(
                     beta = beta[0]
                 determ[param] = pm.HalfCauchy(
                     param,
-                    beta=beta,
+                    beta=beta.astype(np.float32),
                     shape=shape,
                 )
             else:
-                raise ValueError(
-                    "Invalid prior for {0}: {1}".format(param, priors[param][0])
-                )
+                raise ValueError("Invalid prior for {0}: {1}".format(param, priors[param][0]))
 
         # Pack model parameters
         theta = [determ[p] for p in _params if p not in fixed]
@@ -543,13 +515,14 @@ def main(
         loglike_op = LogLike(loglike_calc, data)
 
         # Evalulate likelihood
-        like = pm.Potential("like", loglike_op(*theta)[0])
+        _ = pm.Potential("like", loglike_op(*theta)[0])
 
     # Run inference
     with model:
         trace = pm.sample(
             niter,
-            init="advi",
+            init="auto",
+            # init="advi",
             tune=ntune,
             n_init=ninit,
             cores=num_chains,
@@ -558,8 +531,6 @@ def main(
         )
         with open(outfile, "wb") as f:
             dill.dump({"data": data, "trace": trace}, f)
-            # following fails due to issue with dill in python >3.8
-            # dill.dump({"model": model}, f)
     print(pm.summary(trace).to_string())
 
 
@@ -573,7 +544,6 @@ if __name__ == "__main__":
         "dbfile",
         type=str,
         help="The HII region catalog database filename. If 'synthetic', generate synthetic data.",
-        default="data/hii_v2_20201203.db"
     )
     PARSER.add_argument(
         "outfile",
@@ -626,21 +596,15 @@ if __name__ == "__main__":
         default=_disk_params,
         help="Exponential disk parameters for synthetic data",
     )
-    PARSER.add_argument(
-        "--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)"
-    )
-    PARSER.add_argument(
-        "--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)"
-    )
+    PARSER.add_argument("--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)")
+    PARSER.add_argument("--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)")
     PARSER.add_argument(
         "--Rref",
         type=float,
         default=_RREF,
         help="Reference Galactocentric radius (kpc)",
     )
-    PARSER.add_argument(
-        "--num_spirals", type=int, default=_NUM_SPIRALS, help="Number of spiral arms"
-    )
+    PARSER.add_argument("--num_spirals", type=int, default=_NUM_SPIRALS, help="Number of spiral arms")
     DEFAULT_PRIORS = [
         ["q", "dirichlet"],
         ["az0", "uniform", 0.0, 1.5, 1.5, 3.2, 3.2, 4.7, 4.7, 6.3],
@@ -685,30 +649,16 @@ if __name__ == "__main__":
         default=_OUTLIERS,
         help="HII regions to exclude from analysis",
     )
-    PARSER.add_argument(
-        "--chains", type=int, default=_NUM_CHAINS, help="Number of Markov chains"
-    )
-    PARSER.add_argument(
-        "--ntune", type=int, default=_NTUNE, help="Number of MCMC tuning iterations"
-    )
-    PARSER.add_argument(
-        "--ninit", type=int, default=_NINIT, help="Number of ADVI initialzation samples"
-    )
-    PARSER.add_argument(
-        "--step_scale",
-        type=float,
-        default=_STEP_SCALE,
-        help="Starting NUTS step_scale.",
-    )
+    PARSER.add_argument("--chains", type=int, default=_NUM_CHAINS, help="Number of Markov chains")
+    PARSER.add_argument("--ntune", type=int, default=_NTUNE, help="Number of MCMC tuning iterations")
+    PARSER.add_argument("--ninit", type=int, default=_NINIT, help="Number of ADVI initialzation samples")
     PARSER.add_argument(
         "--target_accept",
         type=float,
         default=_TARGET_ACCEPT,
         help="Desired acceptance rate.",
     )
-    PARSER.add_argument(
-        "--overwrite", action="store_true", help="Overwrite existing outfile"
-    )
+    PARSER.add_argument("--overwrite", action="store_true", help="Overwrite existing outfile")
     ARGS = vars(PARSER.parse_args())
 
     # Generate priors dictionary
@@ -768,7 +718,6 @@ if __name__ == "__main__":
         ntune=ARGS["ntune"],
         ninit=ARGS["ninit"],
         num_chains=ARGS["chains"],
-        step_scale=ARGS["step_scale"],
         target_accept=ARGS["target_accept"],
         fixed=FIXED,
         outliers=ARGS["outliers"],

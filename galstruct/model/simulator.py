@@ -113,6 +113,7 @@ def simulator(
     min_az = params["az0"] - tt.log(Rmax / Rref) / tt.tan(params["pitch"])
     max_az = params["az0"] - tt.log(Rmin / Rref) / tt.tan(params["pitch"])
     spiral_az = tt.stack(tuple(tt.linspace(mina, maxa, 1000) for mina, maxa in zip(min_az, max_az)))
+
     if disk is not None:
         # apply exponential disk
         I2, Rs, Rc = disk

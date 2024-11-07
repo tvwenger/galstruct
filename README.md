@@ -1,20 +1,12 @@
 # galstruct
-#Helloworld
 Modeling Galactic structure with simulation based inference.
 
 ## Installation
 
-I recommend installing `galstruct` in a `conda` virtual environment.
-
 ```bash
-conda create --name galstruct python==3.10 mkl-service
+conda create --name galstruct -c conda-forge pymc pip
 conda activate galstruct
-```
-
-Clone this repository, navigate to it, then install via
-
-```bash
-python -m pip install .
+python -m pip install -e .
 ```
 
 ## Model

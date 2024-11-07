@@ -83,22 +83,3 @@ def calc_sigma2_glong(dist, angle, sigma_arm):
         The width^2 in the longitude direction
     """
     return (tt.atan(sigma_arm / dist) * tt.cos(angle)) ** 2.0
-
-
-def calc_sigma2_vlsr(dvlsr, angle, sigma_arm):
-    """
-    Calculate the width of a spiral in the velocity direction.
-
-    Inputs:
-      dvlsr :: scalar (km/s)
-        Gradient of velocity w.r.t. distance
-      angle :: scalar (radians)
-        Angle between line-of-sight and spiral
-      sigma_arm :: scalar (kpc)
-        Arm width
-
-    Returns: sigma2_glong
-      sigma2_glong :: scalar (radians^2)
-        The width^2 in the longitude direction
-    """
-    return (dvlsr * sigma_arm * tt.sin(angle)) ** 2.0

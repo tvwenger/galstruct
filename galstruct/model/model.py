@@ -33,7 +33,6 @@ from galstruct.model.utils import (
     calc_spiral_angle,
     calc_sigma2_glong,
     calc_sigma2_glat,
-    calc_sigma2_vlsr,
 )
 
 
@@ -194,7 +193,6 @@ class Model:
         glat = tt.asin(sin_glat)
 
         # Get IAU-LSR velocity and derivative w.r.t. distance
-        dist.requires_grad = True
         vlsr = self.model_vlsr(
             dist,
             cos_glong,
@@ -202,9 +200,7 @@ class Model:
             cos_glat,
             sin_glat,
         )
-        vlsr.sum().backward()
-        dvlsr_ddist = dist.grad
-        return glong, glat, vlsr, dvlsr_ddist, dist
+        return glong, glat, vlsr, dist
 
     def model_spread(self, az):
         """
@@ -215,14 +211,16 @@ class Model:
         sigma_arm_height :: spiral FWHM physical width perpendicular to plane (kpc)
 
         """
-        glong, glat, vlsr, dvlsr_ddist, dist = self.model(az)
+        glong, glat, vlsr, dist = self.model(az)
 
         angle = calc_spiral_angle(az, dist, self.pitch, self.R0)
         sigma2_glat = calc_sigma2_glat(dist, self.sigma_arm_height)
         sigma2_glong = calc_sigma2_glong(dist, angle, self.sigma_arm_plane)
-        sigma2_vlsr = self.sigmaV**2.0 + calc_sigma2_vlsr(dvlsr_ddist, angle, self.sigma_arm_plane)
         glong = glong + tt.randn_like(glong) * tt.sqrt(sigma2_glong)
         glat = glat + tt.randn_like(glat) * tt.sqrt(sigma2_glat)
-        vlsr = vlsr + tt.randn_like(vlsr) * tt.sqrt(sigma2_vlsr)
+        vlsr = vlsr + tt.randn_like(vlsr) * self.sigmaV
 
-        return tt.stack((glong, glat, vlsr)).T.detach(), tt.stack((sigma2_glong, sigma2_glat, sigma2_vlsr)).T.detach()
+        return (
+            tt.stack((glong, glat, vlsr)).T.detach(),
+            tt.stack((sigma2_glong, sigma2_glat)).T.detach(),
+        )
