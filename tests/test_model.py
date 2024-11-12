@@ -168,7 +168,8 @@ def test_model():
     fig.colorbar(cax, label="Galactic Latitude (deg)")
     ax.legend(
         *cax.legend_elements(prop="sizes", num=5, color=cax.cmap(0.7), fmt="{x:.1f} kpc"),
-        loc="upper right", title="Distance"
+        loc="upper right",
+        title="Distance"
     )
     ax.set_xlabel(r"$V_{\rm LSR}$ (km s$^{-1}$)")
     ax.set_ylabel("Galactic Longitude (deg)")

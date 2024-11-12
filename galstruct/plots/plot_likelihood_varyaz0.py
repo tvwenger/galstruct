@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-plot_likelihood_varyR0.py
+plot_likelihood_varyaz0.py
 
-Generate animation (varying R0 values) of simulated data, data sampled from the learned
+Generate animation (for varying az0 values) of simulated data, data sampled from the learned
 likelihood, a grid of the true likelihood, and a grid of the
-learned likelihood.
+learned likelihood. 
 
-Each R0 frame is saved to outdir
+Each reference azimuth frame is saved to outdir
 with prefix frame_*, and can be combined into a gif with:
 ffmpeg -v 0 -i frame_%03d.png -vf palettegen -y palette.png
 ffmpeg -v 0 -framerate 20 -loop 0 -i frame_%03d.png -i palette.png -lavfi paletteuse -y movie.gif
@@ -64,8 +64,8 @@ _params = [
 
 # values held as constant for each parameter
 _THETA = [
-    0.25, # pitch
-    5.0, # sigmaV
+    0.25,  # pitch
+    5.0,  # sigmaV
     0.5,
     0.1,
     8.166,
@@ -124,7 +124,7 @@ def main(
     """
     if not os.path.isdir(outdir):
         os.mkdir(outdir)
-    
+
     # keep only free params for likelihood theta
     like_theta = []
     all_theta = []
@@ -134,13 +134,10 @@ def main(
             like_theta += [value]
 
     # add az0 placeholder to theta. Get range of az0
-    az0 = 1.49 + np.pi # radians
-    like_theta = tt.tensor([az0] + like_theta)
-    all_theta = tt.tensor([az0] + all_theta)
-    #az0s_deg = np.linspace(0.0, 359.0, 360)
-    #az0s = np.deg2rad(az0s_deg)
-    print(like_theta[5])
-    R0s = np.linspace(7,9,30)
+    like_theta = tt.tensor([0.0] + like_theta)
+    all_theta = tt.tensor([0.0] + all_theta)
+    az0s_deg = np.linspace(0.0, 359.0, 360)
+    az0s = np.deg2rad(az0s_deg)
 
     # Load neural network
     with open(net_fname, "rb") as f:
@@ -158,11 +155,11 @@ def main(
     grid = tt.tensor(grid).float()
 
     # Loop over azimuth
-    for i, R0 in enumerate(R0s):
+    for i, (az0_deg, az0) in enumerate(zip(az0s_deg, az0s)):
         fig, ax = plt.subplots(1, 4, sharex=True, sharey=True, figsize=(16, 9))
         fig.subplots_adjust(left=0.075, right=0.99, bottom=0.225, top=0.95, wspace=0)
-        like_theta[5] = R0
-        all_theta[5] = R0
+        like_theta[0] = az0
+        all_theta[0] = az0
 
         # Simulated data
         data = simulator(
@@ -185,7 +182,7 @@ def main(
         ax[0].set_title("Simulated")
         ax[0].set_xlim(-150.0, 150.0)
         ax[0].set_ylim(-180.0, 180.0)
-        label = r"$R_0 = " + "{0:.2f}".format(R0) + r"$kpc"
+        label = r"$\theta_0 = " + "{0:.1f}".format(az0_deg) + r"^\circ$"
         props = {"boxstyle": "round", "facecolor": "white", "alpha": 0.5}
         ax[0].text(-100, 150, label, fontsize=24, bbox=props)
 
@@ -215,9 +212,7 @@ def main(
         ax[1].set_title("True")
 
         # Grid learned likelihood data
-        logp = net["density_estimator"]._log_prob(
-            grid, context=like_theta.expand(len(grid), -1)
-        )
+        logp = net["density_estimator"].log_prob(grid[:, None, :], like_theta[None, :])
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
         cax3 = ax[2].imshow(
@@ -235,8 +230,7 @@ def main(
         ax[2].set_title("Learned")
 
         # Sampled data
-        data = net["density_estimator"]._sample(num_data, context=like_theta[None])[0]
-        data = data.detach().numpy()
+        data = net["density_estimator"].sample((num_data,), like_theta[None])[:, 0, :].detach().numpy()
         cax1 = ax[3].scatter(
             data[:, 2],
             np.rad2deg(data[:, 0]),
@@ -253,9 +247,7 @@ def main(
         # Add colorbars
         fig.canvas.draw_idle()
         cbar_ax1 = fig.add_axes([0.075, 0.1, 0.45, 0.025])
-        plt.colorbar(
-            cax1, cax=cbar_ax1, orientation="horizontal", label="Latitude (deg)"
-        )
+        plt.colorbar(cax1, cax=cbar_ax1, orientation="horizontal", label="Latitude (deg)")
         cbar_ax2 = fig.add_axes([0.5375, 0.1, 0.45, 0.025])
         plt.colorbar(
             cax3,
@@ -275,18 +267,13 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     PARSER.add_argument("net", type=str, help="Neural network pickle filename")
-    PARSER.add_argument(
-        "--outdir", type=str, default="frames", help="Directory where images are saved"
-    )
+    PARSER.add_argument("--outdir", type=str, default="frames", help="Directory where images are saved")
     PARSER.add_argument(
         "--fixed",
         action="append",
         nargs="+",
         default=[],
-        help=(
-            "Fixed parameter names followed by their fixed value "
-            + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"
-        ),
+        help=("Fixed parameter names followed by their fixed value " + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"),
     )
     ARGS = vars(PARSER.parse_args())
     FIXED = {}

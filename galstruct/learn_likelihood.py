@@ -32,8 +32,10 @@ import numpy as np
 
 import torch
 
-from sbi.utils import likelihood_nn
-from sbi.inference import SNLE, prepare_for_sbi, simulate_for_sbi
+import sbi.utils
+from sbi.inference import NLE_A
+from sbi.utils.user_input_checks import check_sbi_inputs, process_prior, process_simulator
+from sbi.neural_nets import likelihood_nn
 
 from galstruct.model.simulator import simulator
 from galstruct.torch_prior import Prior
@@ -46,7 +48,6 @@ _NUM_SIMS = 100000
 _DENSITY_ESTIMATOR = "maf"
 _HIDDEN_FEATURES = 50
 _TRANSFORM_LAYERS = 5
-_SIM_BATCH_SIZE = 1
 _TRAINING_BATCH_SIZE = 50
 _RMIN = 3.0
 _RMAX = 15.0
@@ -62,7 +63,6 @@ def main(
     density_estimator=_DENSITY_ESTIMATOR,
     hidden_features=_HIDDEN_FEATURES,
     transform_layers=_TRANSFORM_LAYERS,
-    sim_batch_size=_SIM_BATCH_SIZE,
     training_batch_size=_TRAINING_BATCH_SIZE,
     Rmin=_RMIN,
     Rmax=_RMAX,
@@ -99,8 +99,8 @@ def main(
         Number of neural spline flow hidden features
       transform_layers :: integer
         Number of neural spline flow transform layers
-      sim_batch_size, training_batch_size :: integers
-        Batch sizes for simulations and training
+      training_batch_size :: integer
+        Batch size for training
       Rmin, Rmax :: scalars (kpc)
         The minimum and maximum radii of the spirals
       Rref :: scalar (kpc)
@@ -135,7 +135,11 @@ def main(
             fixed=fixed,
         )
 
-    sim, prior = prepare_for_sbi(sim, prior)
+    # prepare for SBI
+    prior, num_parameters, prior_returns_numpy = process_prior(prior)
+    sim = process_simulator(sim, prior, prior_returns_numpy)
+    check_sbi_inputs(sim, prior)
+    print(f"Learning {num_parameters} parameters")
 
     # Density estimator
     de = None
@@ -145,12 +149,8 @@ def main(
         de = "Masked Autoregressive Flow"
     else:
         raise ValueError("Invalid density estimator: {0}".format(density_estimator))
-    print("Learning likelihood with {0} density estimator,".format(de))
-    print(
-        "{0} hidden features, and {1} transform layers.".format(
-            hidden_features, transform_layers
-        )
-    )
+    print("Learning likelihood with {0} density estimator".format(de))
+    print("{0} hidden features, and {1} transform layers.".format(hidden_features, transform_layers))
     density_estimator_build_fun = likelihood_nn(
         model=density_estimator,
         hidden_features=hidden_features,
@@ -158,18 +158,19 @@ def main(
     )
 
     # Inference
-    inference = SNLE(prior=prior, density_estimator=density_estimator_build_fun,)
-    print("Simulating with batch size: {0}".format(sim_batch_size))
+    inference = NLE_A(
+        prior=prior,
+        density_estimator=density_estimator_build_fun,
+    )
+    print("Simulating...")
+    theta = prior.sample((num_sims,))
+    x = simulator(theta)
+    isnan = torch.any(torch.isnan(x), axis=1)
+    print(f"Dropping {isnan.sum()} simulations with NaNs")
+    x = x[~isnan]
+    theta = theta[~isnan]
     print("Training with batch size: {0}".format(training_batch_size))
-    theta, x = simulate_for_sbi(
-        sim,
-        proposal=prior,
-        num_simulations=num_sims,
-        simulation_batch_size=sim_batch_size,
-    )
-    density_estimator = inference.append_simulations(theta, x).train(
-        training_batch_size=training_batch_size
-    )
+    density_estimator = inference.append_simulations(theta, x).train(training_batch_size=training_batch_size)
     posterior = inference.build_posterior(density_estimator)
 
     # Save
@@ -191,9 +192,7 @@ if __name__ == "__main__":
         prog="learn_likelihood.py",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    PARSER.add_argument(
-        "outfile", type=str, help="Where the neural network is stored (.pkl extension)"
-    )
+    PARSER.add_argument("outfile", type=str, help="Where the neural network is stored (.pkl extension)")
     PARSER.add_argument(
         "-n",
         "--nsims",
@@ -220,23 +219,13 @@ if __name__ == "__main__":
         help="Number of neural spine flow transform layers",
     )
     PARSER.add_argument(
-        "--sim_batch_size",
-        type=int,
-        default=_SIM_BATCH_SIZE,
-        help="Batch size for simulations",
-    )
-    PARSER.add_argument(
         "--training_batch_size",
         type=int,
         default=_TRAINING_BATCH_SIZE,
         help="Batch size for training",
     )
-    PARSER.add_argument(
-        "--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)"
-    )
-    PARSER.add_argument(
-        "--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)"
-    )
+    PARSER.add_argument("--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)")
+    PARSER.add_argument("--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)")
     PARSER.add_argument(
         "--Rref",
         type=float,
@@ -278,14 +267,9 @@ if __name__ == "__main__":
         action="append",
         nargs="+",
         default=[],
-        help=(
-            "Fixed parameter names followed by their fixed value "
-            + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"
-        ),
+        help=("Fixed parameter names followed by their fixed value " + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"),
     )
-    PARSER.add_argument(
-        "--overwrite", action="store_true", help="Overwrite existing outfile"
-    )
+    PARSER.add_argument("--overwrite", action="store_true", help="Overwrite existing outfile")
     ARGS = vars(PARSER.parse_args())
 
     # Generate priors dictionary
@@ -332,7 +316,6 @@ if __name__ == "__main__":
         density_estimator=ARGS["density_estimator"],
         hidden_features=ARGS["features"],
         transform_layers=ARGS["layers"],
-        sim_batch_size=ARGS["sim_batch_size"],
         training_batch_size=ARGS["training_batch_size"],
         Rmin=ARGS["Rmin"],
         Rmax=ARGS["Rmax"],

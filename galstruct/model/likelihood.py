@@ -27,14 +27,7 @@ Trey Wenger - May 2022 - Formatting
 
 import torch
 import torch.distributions as tdist
-from .rotcurve import rotcurve_constants, calc_theta
-from .model import model
-from .utils import (
-    calc_spiral_angle,
-    calc_sigma2_glong,
-    calc_sigma2_glat,
-    calc_sigma2_vlsr,
-)
+from galstruct.model.model import Model
 
 
 def log_like(
@@ -117,51 +110,14 @@ def log_like(
     max_az = params["az0"] - torch.log(Rmin / Rref) / torch.tan(params["pitch"])
     az = torch.linspace(min_az, max_az, az_bins)
 
-    # Get model longitude, latitude, velocity at each azimuth
-    tilt = torch.asin(params["Zsun"] / params["R0"] / 1000.0)
-    cos_tilt, sin_tilt = torch.cos(tilt), torch.sin(tilt)
-    cos_roll, sin_roll = torch.cos(params["roll"]), torch.sin(params["roll"])
-    R0a22, lam, loglam, term1, term2 = rotcurve_constants(
-        params["R0"], params["a2"], params["a3"]
-    )
-    theta0 = calc_theta(params["R0"], R0a22, lam, loglam, term1, term2)
-    glong, glat, vlsr, dvlsr_ddist, dist = model(
-        az,
-        params["az0"],
-        torch.tan(params["pitch"]),
-        params["R0"],
-        params["Usun"],
-        params["Vsun"],
-        params["Wsun"],
-        params["Upec"],
-        params["Vpec"],
-        cos_tilt,
-        sin_tilt,
-        cos_roll,
-        sin_roll,
-        R0a22,
-        lam,
-        loglam,
-        term1,
-        term2,
-        theta0,
-        params["warp_amp"],
-        params["warp_off"],
-        Rref=Rref,
-    )
-
-    # Get weights in each dimension
-    angle = calc_spiral_angle(az, dist, params["pitch"], params["R0"])
-    sigma2_glat = calc_sigma2_glat(dist, params["sigma_arm_height"])
-    sigma2_glong = calc_sigma2_glong(dist, angle, params["sigma_arm_plane"])
-    sigma2_vlsr = params["sigmaV"] ** 2.0 + calc_sigma2_vlsr(
-        dvlsr_ddist, angle, params["sigma_arm_plane"]
-    )
+    # Evaluate the model
+    model = Model(**params)
+    model_data, model_sigma2_data = model.model_spread(az)
 
     # Get likelihood (shape len(data), num_az)
-    glong_prob = tdist.Normal(glong, torch.sqrt(sigma2_glong))
-    glat_prob = tdist.Normal(glat, torch.sqrt(sigma2_glat))
-    vlsr_prob = tdist.Normal(vlsr, torch.sqrt(sigma2_vlsr))
+    glong_prob = tdist.Normal(model_data[:, 0], torch.sqrt(model_sigma2_data[:, 0]))
+    glat_prob = tdist.Normal(model_data[:, 1], torch.sqrt(model_sigma2_data[:, 1]))
+    vlsr_prob = tdist.Normal(model_data[:, 2], params["sigmaV"])
     log_prob = glong_prob.log_prob(data[:, 0, None])
     log_prob += glat_prob.log_prob(data[:, 1, None])
     log_prob += vlsr_prob.log_prob(data[:, 2, None])
