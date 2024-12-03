@@ -3,6 +3,7 @@
 #SBATCH --job-name="train_nn"
 #SBATCH --output="logs/%x.%j.%N.out"
 #SBATCH --error="logs/%x.%j.%N.err"
+#SBATCH --nodes=4
 #SBATCH --ntasks=4
 #SBATCH --cpus-per-task=8
 #SBATCH --export=ALL
