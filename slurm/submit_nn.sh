@@ -14,7 +14,7 @@
 eval "$(conda shell.bash hook)"
 conda activate galstruct
 
-srun --exclusive -n 1 python galstruct/learn_likelihood.py \
+srun --nodes=1 python galstruct/learn_likelihood.py \
     -n 10_000 \
     --density_estimator maf \
     --features 50 \
@@ -24,7 +24,7 @@ srun --exclusive -n 1 python galstruct/learn_likelihood.py \
     --overwrite \
     nn_10k_maf_50f_5l_50t.pkl &
 
-srun --exclusive -n 1 python galstruct/learn_likelihood.py \
+srun --nodes=1 python galstruct/learn_likelihood.py \
     -n 100_000 \
     --density_estimator maf \
     --features 50 \
@@ -34,7 +34,7 @@ srun --exclusive -n 1 python galstruct/learn_likelihood.py \
     --overwrite \
     nn_100k_maf_50f_5l_50t.pkl & 
 
-srun --exclusive -n 1 python galstruct/learn_likelihood.py \
+srun --nodes=1 python galstruct/learn_likelihood.py \
     -n 1_000_000 \
     --density_estimator maf \
     --features 50 \
@@ -44,7 +44,7 @@ srun --exclusive -n 1 python galstruct/learn_likelihood.py \
     --overwrite \
     nn_1m_maf_50f_5l_50t.pkl &
 
-srun --exclusive -n 1 python galstruct/learn_likelihood.py \
+srun --nodes=1 python galstruct/learn_likelihood.py \
     -n 10_000_000 \
     --density_estimator maf \
     --features 50 \
