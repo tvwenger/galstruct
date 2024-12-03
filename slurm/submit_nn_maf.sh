@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --chdir="/home/twenger/galstruct"
-#SBATCH --job-name="train_nn"
+#SBATCH --job-name="train_nn_maf"
 #SBATCH --output="logs/%x.%j.%N.out"
 #SBATCH --error="logs/%x.%j.%N.err"
 #SBATCH --ntasks=4
@@ -47,7 +47,7 @@ srun --output logs/%x.%j.%N.nn_1m_maf_50f_5l_50t.out \
     --overwrite \
     nn_1m_maf_50f_5l_50t.pkl &
 
-srun srun --output logs/%x.%j.%N.nn_10m_maf_50f_5l_50t.out \
+srun --output logs/%x.%j.%N.nn_10m_maf_50f_5l_50t.out \
     --error logs/%x.%j.%N.nn_10m_maf_50f_5l_50t.err \
     --exclusive -N1 -n1 \
     python galstruct/learn_likelihood.py \
