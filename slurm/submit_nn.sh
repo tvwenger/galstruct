@@ -13,6 +13,7 @@ conda activate galstruct
 
 srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
     --error logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.err \
+    --exclusive --ntasks=1 \
     python galstruct/learn_likelihood.py \
     -n 10_000 \
     --density_estimator maf \
@@ -24,6 +25,7 @@ srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
 
 srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
     --error logs/%x.%j.%N.nn_100k_maf_50f_5l_50t.err \
+    --exclusive --ntasks=1 \
     python galstruct/learn_likelihood.py \
     -n 100_000 \
     --density_estimator maf \
@@ -35,6 +37,7 @@ srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
 
 srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
     --error logs/%x.%j.%N.nn_1m_maf_50f_5l_50t.err \
+    --exclusive --ntasks=1 \
     python galstruct/learn_likelihood.py \
     -n 1_000_000 \
     --density_estimator maf \
@@ -46,6 +49,7 @@ srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
 
 srun srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
     --error logs/%x.%j.%N.nn_10m_maf_50f_5l_50t.err \
+    --exclusive --ntasks=1 \
     python galstruct/learn_likelihood.py \
     -n 10_000_000 \
     --density_estimator maf \
