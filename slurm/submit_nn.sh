@@ -23,7 +23,7 @@ srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
     --overwrite \
     nn_10k_maf_50f_5l_50t.pkl &
 
-srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
+srun --output logs/%x.%j.%N.nn_100k_maf_50f_5l_50t.out \
     --error logs/%x.%j.%N.nn_100k_maf_50f_5l_50t.err \
     --exclusive -N1 -n1 \
     python galstruct/learn_likelihood.py \
@@ -35,7 +35,7 @@ srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
     --overwrite \
     nn_100k_maf_50f_5l_50t.pkl & 
 
-srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
+srun --output logs/%x.%j.%N.nn_1m_maf_50f_5l_50t.out \
     --error logs/%x.%j.%N.nn_1m_maf_50f_5l_50t.err \
     --exclusive -N1 -n1 \
     python galstruct/learn_likelihood.py \
@@ -47,7 +47,7 @@ srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
     --overwrite \
     nn_1m_maf_50f_5l_50t.pkl &
 
-srun srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
+srun srun --output logs/%x.%j.%N.nn_10m_maf_50f_5l_50t.out \
     --error logs/%x.%j.%N.nn_10m_maf_50f_5l_50t.err \
     --exclusive -N1 -n1 \
     python galstruct/learn_likelihood.py \
