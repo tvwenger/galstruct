@@ -6,7 +6,6 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=twenger2@wisc.edu
 #SBATCH --ntasks=4
-#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --export=ALL
 #SBATCH --time 72:00:00
@@ -14,7 +13,7 @@
 eval "$(conda shell.bash hook)"
 conda activate galstruct
 
-srun --nodes=1 python galstruct/learn_likelihood.py \
+srun python galstruct/learn_likelihood.py \
     -n 10_000 \
     --density_estimator maf \
     --features 50 \
@@ -24,7 +23,7 @@ srun --nodes=1 python galstruct/learn_likelihood.py \
     --overwrite \
     nn_10k_maf_50f_5l_50t.pkl &
 
-srun --nodes=1 python galstruct/learn_likelihood.py \
+srun python galstruct/learn_likelihood.py \
     -n 100_000 \
     --density_estimator maf \
     --features 50 \
@@ -34,7 +33,7 @@ srun --nodes=1 python galstruct/learn_likelihood.py \
     --overwrite \
     nn_100k_maf_50f_5l_50t.pkl & 
 
-srun --nodes=1 python galstruct/learn_likelihood.py \
+srun python galstruct/learn_likelihood.py \
     -n 1_000_000 \
     --density_estimator maf \
     --features 50 \
@@ -44,7 +43,7 @@ srun --nodes=1 python galstruct/learn_likelihood.py \
     --overwrite \
     nn_1m_maf_50f_5l_50t.pkl &
 
-srun --nodes=1 python galstruct/learn_likelihood.py \
+srun python galstruct/learn_likelihood.py \
     -n 10_000_000 \
     --density_estimator maf \
     --features 50 \
