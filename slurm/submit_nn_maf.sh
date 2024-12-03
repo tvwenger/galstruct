@@ -5,7 +5,6 @@
 #SBATCH --error="logs/%x.%j.%N.err"
 #SBATCH --ntasks=4
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=20
 #SBATCH --export=ALL
 #SBATCH --time 72:00:00
 
