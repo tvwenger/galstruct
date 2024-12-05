@@ -133,6 +133,7 @@ def main(
             Rmax=torch.tensor(Rmax),
             Rref=torch.tensor(Rref),
             fixed=fixed,
+            disk=None,
         )
 
     # prepare for SBI
@@ -162,16 +163,27 @@ def main(
         prior=prior,
         density_estimator=density_estimator_build_fun,
     )
-    print("Simulating...")
+
+    # Sample prior
+    print("Sampling prior...")
     theta = prior.sample((num_sims,))
-    x = simulator(theta)
+    print(theta.shape)
+    print(fixed)
+
+    # Simulate
+    print("Simulating...")
+    x = sim(theta)
     isnan = torch.any(torch.isnan(x), axis=1)
     print(f"Dropping {isnan.sum()} simulations with NaNs")
     x = x[~isnan]
     theta = theta[~isnan]
+
+    # Train
     print("Training with batch size: {0}".format(training_batch_size))
+    print()
     density_estimator = inference.append_simulations(theta, x).train(training_batch_size=training_batch_size)
     posterior = inference.build_posterior(density_estimator)
+    print()
 
     # Save
     print("Pickling results to {0}".format(outfile))

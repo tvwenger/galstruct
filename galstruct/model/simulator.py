@@ -104,7 +104,7 @@ def simulator(
     ]
     for name in param_names:
         if name in fixed:
-            params[name] = tt.as_tensor([fixed[name] for _ in range(num_data)])
+            params[name] = tt.as_tensor([fixed[name]] * num_data)
         else:
             params[name] = theta[:, idx]
             idx += 1
@@ -112,10 +112,10 @@ def simulator(
     # Get azimuth range, pick a random azimuth
     min_az = params["az0"] - tt.log(Rmax / Rref) / tt.tan(params["pitch"])
     max_az = params["az0"] - tt.log(Rmin / Rref) / tt.tan(params["pitch"])
-    spiral_az = tt.stack(tuple(tt.linspace(mina, maxa, 1000) for mina, maxa in zip(min_az, max_az)))
 
     if disk is not None:
         # apply exponential disk
+        spiral_az = tt.stack(tuple(tt.linspace(mina, maxa, 1000) for mina, maxa in zip(min_az, max_az)))
         I2, Rs, Rc = disk
         spiral_R = Rref * tt.exp((params["az0"][:, None] - spiral_az) * tt.tan(params["pitch"][:, None]))
         prob = tt.exp(-spiral_R / Rs) / (1.0 + I2 * tt.exp(-spiral_R / Rc))
@@ -123,10 +123,10 @@ def simulator(
         idx = prob.multinomial(num_samples=1)
         az = tt.gather(spiral_az, 1, idx)[:, 0]
     else:
-        az = tt.tensor([saz[tt.randint(len(saz), (1,))[0]] for saz in spiral_az])
+        az = (max_az - min_az) * tt.rand(num_data) + min_az
 
     # Get model longitude, latitude, velocity
-    new_model = Model(
+    model = Model(
         # these are physical parameters of the model
         az0=params["az0"],
         R0=params["R0"],
@@ -152,6 +152,6 @@ def simulator(
     )
 
     # this is a call to our Model, it will return out the final glong, glat, and vlsr for a generated HII region
-    data, _ = new_model.model_spread(az)
+    data, _ = model.model_spread(az)
 
     return data

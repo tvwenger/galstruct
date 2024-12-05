@@ -93,9 +93,7 @@ class Prior:
             elif priors[name][0] == "halfcauchy":
                 self.priors.append(dist.HalfCauchy(priors[name][1]))
             else:
-                raise ValueError(
-                    "Invalid prior type {0} for {1}".format(priors[name][0], name)
-                )
+                raise ValueError("Invalid prior type {0} for {1}".format(priors[name][0], name))
 
     def sample(self, sample_shape=()):
         """
@@ -113,8 +111,8 @@ class Prior:
             samp = tt.empty(1, len(self.priors))
         else:
             samp = tt.empty(sample_shape[0], len(self.priors))
-        for i in range(samp.shape[0]):
-            samp[i] = tt.tensor([p.rsample() for p in self.priors])
+        for i, p in enumerate(self.priors):
+            samp[:, i] = p.sample((samp.shape[0],))
         if len(sample_shape) == 0:
             return samp[0]
         return samp
@@ -135,11 +133,7 @@ class Prior:
         if value.ndim > 1:
             log_p = tt.empty(value.shape[0])
             for i, val in enumerate(value):
-                log_p[i] = tt.sum(
-                    tt.tensor([p.log_prob(v) for p, v in zip(self.priors, val)])
-                )
+                log_p[i] = tt.sum(tt.tensor([p.log_prob(v) for p, v in zip(self.priors, val)]))
         else:
-            log_p = tt.sum(
-                tt.tensor([p.log_prob(v) for p, v in zip(self.priors, value)])
-            )
+            log_p = tt.sum(tt.tensor([p.log_prob(v) for p, v in zip(self.priors, value)]))
         return log_p
