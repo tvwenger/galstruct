@@ -193,7 +193,7 @@ def main(
             Rmin=tt.tensor(Rmin),
             Rmax=tt.tensor(Rmax),
             Rref=tt.tensor(Rref),
-            az_bins=1000,
+            az_bins=10000,
         )
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
@@ -205,6 +205,7 @@ def main(
             vmin=-20.0,
             vmax=0.0,
             aspect="auto",
+            cmap="inferno",
         )
         ax[1].set_xlabel("VLSR (km/s)")
         ax[1].set_xlim(-150.0, 150.0)
@@ -223,6 +224,7 @@ def main(
             vmin=-20.0,
             vmax=0.0,
             aspect="auto",
+            cmap="inferno",
         )
         ax[2].set_xlabel("VLSR (km/s)")
         ax[2].set_xlim(-150.0, 150.0)
