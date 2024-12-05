@@ -1,0 +1,8 @@
+name: galstruct
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pip
+  - pymc
+  - pytensor
