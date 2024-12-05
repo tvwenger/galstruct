@@ -12,6 +12,10 @@
 eval "$(conda shell.bash hook)"
 conda activate galstruct
 
+# This is really inefficient because some networks converge early, yet we
+# hog the resources until all are finished. Instead, we should have a script
+# that submits each job separately.
+
 srun --output logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.out \
     --error logs/%x.%j.%N.nn_10k_maf_50f_5l_50t.err \
     --exclusive -N1 -n1 \
