@@ -136,7 +136,7 @@ def main(
     # add az0 placeholder to theta. Get range of az0
     like_theta = tt.tensor([0.0] + like_theta)
     all_theta = tt.tensor([0.0] + all_theta)
-    az0s_deg = np.linspace(0.0, 359.0, 360)
+    az0s_deg = np.linspace(0.0, 359.0, 36)
     az0s = np.deg2rad(az0s_deg)
 
     # Load neural network
@@ -198,11 +198,11 @@ def main(
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
         ax[1].imshow(
-            logp - logp.max(),
+            logp - np.quantile(logp, 0.99),
             extent=extent,
             origin="lower",
             interpolation="none",
-            vmin=-20.0,
+            vmin=-10.0,
             vmax=0.0,
             aspect="auto",
             cmap="inferno",
@@ -217,11 +217,11 @@ def main(
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
         cax3 = ax[2].imshow(
-            logp - logp.max(),
+            logp - np.quantile(logp, 0.99),
             extent=extent,
             origin="lower",
             interpolation="none",
-            vmin=-20.0,
+            vmin=-10.0,
             vmax=0.0,
             aspect="auto",
             cmap="inferno",
