@@ -141,12 +141,12 @@ def main(net_fname, num_sims=1000, Rmin=3.0, Rmax=15.0, Rref=8.0, fixed={}, disk
     logp_true = logp_true[~isnan]
     logp_net = logp_net[~isnan]
 
-    # Calculate K-S statistic
-    stat = anderson_ksamp([logp_true, logp_net])
-
-    # plot cumulative distribution offset to same median
+    # offset median
     logp_true = logp_true - np.median(logp_true)
     logp_net = logp_net - np.median(logp_net)
+
+    # Calculate statistic
+    stat = anderson_ksamp([logp_true, logp_net])
 
     fig, axes = plt.subplots(2, layout="constrained", figsize=(6, 8), sharex=True, sharey=True)
     axes[0].ecdf(logp_true, color="k", label="True")
@@ -197,12 +197,12 @@ def main(net_fname, num_sims=1000, Rmin=3.0, Rmax=15.0, Rref=8.0, fixed={}, disk
     logp_true = logp_true[~isnan]
     logp_net = logp_net[~isnan]
 
-    # Calculate K-S statistic
-    stat = anderson_ksamp([logp_true, logp_net])
-
-    # plot cumulative distribution offset to same median
+    # offset medians
     logp_true = logp_true - np.median(logp_true)
     logp_net = logp_net - np.median(logp_net)
+
+    # Calculate statistic
+    stat = anderson_ksamp([logp_true, logp_net])
 
     # add to plot
     axes[1].ecdf(logp_true, color="k")
