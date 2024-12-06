@@ -22,7 +22,7 @@ output = /home/twenger2/galstruct/logs/train_nn_$(Cluster)_$(Process).out
 
 # Resource request
 request_cpus = 8
-request_memory = 4GB
+request_memory = 8GB
 request_disk = 1GB
 
 # Up to 1000 spectra

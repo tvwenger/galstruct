@@ -14,5 +14,3 @@ for fname in *.pkl; do
 	   --fixed roll 0.0 \
 	   ${fname}
 done    
-    
-    
