@@ -9,4 +9,4 @@ python learn_likelihood.py \
     --fixed Zsun 5.5 \
     --fixed roll 0.0 \
     --overwrite \
-    nn_${1}_${2}n_${3}f_${4}l_${5}t.pkl
+    nn.pkl

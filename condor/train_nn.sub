@@ -13,7 +13,7 @@ arguments = $(density) $(nsims) $(nfeatures) $(nlayers) $(batchsize)
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 transfer_input_files = /home/twenger2/galstruct/galstruct/learn_likelihood.py
-transfer_output_remaps = "$(Process)_amoeba2.pkl = /home/twenger2/galstruct/nn_$(density)_$(nsims)n_$(nfeatures)f_$(nlayers)l_$(batchsize)t.pkl"
+transfer_output_remaps = "nn.pkl = /home/twenger2/galstruct/nn_$(density)_$(nsims)n_$(nfeatures)f_$(nlayers)l_$(batchsize)t.pkl"
 
 # Logging
 log = /home/twenger2/galstruct/logs/train_nn_$(Cluster)_$(Process).log
