@@ -11,7 +11,7 @@ arguments = $(net)
 # Data handling
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = /home/twenger2/galstruct/galstruct/mcmc_posterior.py, $(net)
+transfer_input_files = /home/twenger2/galstruct/galstruct/mcmc_posterior.py, /home/twenger2/galstruct/$(net)
 transfer_output_remaps = "mcmc.pkl = /home/twenger2/galstruct/mcmc_$(net)_1arm.pkl"
 
 # Logging
