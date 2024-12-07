@@ -1,9 +1,8 @@
 # HTC Submit File
 # Train SBI NNs using NSF
 
-# Docker container
-universe = docker
-docker_image = tvwenger/galstruct:v1.0.2
+requirements = (HasCHTCStaging == true)
+container_image = file:///staging/twenger2/galstruct-v1.0.2.sif
 
 # Executable
 executable = /home/twenger2/galstruct/condor/train_nn.sh

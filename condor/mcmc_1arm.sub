@@ -1,9 +1,8 @@
 # HTC Submit File
 # Sample posterior with MCMC
 
-# Docker container
-universe = docker
-docker_image = tvwenger/galstruct:v1.0.2
+requirements = (HasCHTCStaging == true)
+container_image = file:///staging/twenger2/galstruct-v1.0.2.sif
 
 # Executable
 executable = /home/twenger2/galstruct/condor/mcmc_1arm.sh
@@ -23,7 +22,7 @@ output = /home/twenger2/galstruct/logs/mcmc_1arm_$(Cluster)_$(Process).out
 # Resource request
 request_cpus = 12
 request_memory = 16GB
-request_disk = 16GB
+request_disk = 32GB
 
 # Submit job
 queue 1
