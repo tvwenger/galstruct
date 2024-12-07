@@ -22,8 +22,8 @@ output = /home/twenger2/galstruct/logs/mcmc_1arm_$(Cluster)_$(Process).out
 
 # Resource request
 request_cpus = 12
-request_memory = 8GB
-request_disk = 4GB
+request_memory = 32GB
+request_disk = 16GB
 
 # Submit job
 queue 1
