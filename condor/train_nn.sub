@@ -2,7 +2,7 @@
 # Train SBI NNs using NSF
 
 requirements = (HasCHTCStaging == true)
-container_image = file:///staging/twenger2/galstruct-v1.0.2.sif
+container_image = file:///staging/twenger2/galstruct-v1.0.3.sif
 
 # Executable
 executable = /home/twenger2/galstruct/condor/train_nn.sh
