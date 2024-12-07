@@ -3,7 +3,7 @@
 
 # Docker container
 universe = docker
-docker_image = tvwenger/galstruct:v1.0.1
+docker_image = tvwenger/galstruct:v1.0.2
 
 # Executable
 executable = /home/twenger2/galstruct/condor/mcmc_4arm.sh
