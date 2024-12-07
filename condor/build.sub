@@ -1,0 +1,13 @@
+# build.sub
+# For building an Apptainer container
+
+log = build.log
+
+requirements = (HasCHTCStaging == true)
+
++IsBuildJob = true
+request_cpus = 1
+request_memory = 4GB
+request_disk = 12GB
+
+queue
