@@ -6,18 +6,18 @@ container_image = file:///staging/twenger2/galstruct-v1.0.2.sif
 
 # Executable
 executable = /home/twenger2/galstruct/condor/mcmc_1arm.sh
-arguments = 
+arguments = $(net)
 
 # Data handling
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = /home/twenger2/galstruct/galstruct/mcmc_posterior.py, /home/twenger2/galstruct/nn_nsf_2_097_152n_64f_8l_1_024t.pkl
-transfer_output_remaps = "mcmc.pkl = /home/twenger2/galstruct/mcmc_1arm.pkl"
+transfer_input_files = /home/twenger2/galstruct/galstruct/mcmc_posterior.py, $(net)
+transfer_output_remaps = "mcmc.pkl = /home/twenger2/galstruct/mcmc_$(net)_1arm.pkl"
 
 # Logging
-log = /home/twenger2/galstruct/logs/mcmc_1arm_$(Cluster)_$(Process).log
-error = /home/twenger2/galstruct/logs/mcmc_1arm_$(Cluster)_$(Process).err
-output = /home/twenger2/galstruct/logs/mcmc_1arm_$(Cluster)_$(Process).out
+log = /home/twenger2/galstruct/logs/mcmc_$(net)_1arm_$(Cluster)_$(Process).log
+error = /home/twenger2/galstruct/logs/mcmc_$(net)_1arm_$(Cluster)_$(Process).err
+output = /home/twenger2/galstruct/logs/mcmc_$(net)_1arm_$(Cluster)_$(Process).out
 
 # Resource request
 request_cpus = 12
