@@ -636,9 +636,9 @@ if __name__ == "__main__":
         ),
     )
     PARSER.add_argument(
-        "-f",
         "--fixed",
-        nargs=2,
+        action="append",
+        nargs="+",
         default=[],
         help=("Fixed GRM parameter names followed by their fixed value."),
     )
@@ -699,7 +699,6 @@ if __name__ == "__main__":
             for PRIOR in DEFAULT_PRIORS:
                 if PRIOR[0] == PARAM:
                     PRIORS[PARAM] = [PRIOR[1]] + [float(v) for v in PRIOR[2:]]
-
     main(
         ARGS["dbfile"],
         ARGS["outfile"],
