@@ -1,6 +1,7 @@
 #!/bin/bash
 
-python mcmc_posterior.py \
+tmpdir=`mktemp -d`
+PYTENSOR_FLAGS="base_compiledir=$tmpdir" python mcmc_posterior.py \
     synthetic \
     mcmc.pkl \
     nn_nsf_2_097_152n_64f_8l_1_024t.pkl \
