@@ -1,0 +1,29 @@
+# HTC Submit File
+# Sample posterior with MCMC
+
+# Docker container
+universe = docker
+docker_image = tvwenger/galstruct:v1.0.1
+
+# Executable
+executable = /home/twenger2/galstruct/condor/mcmc_1arm.sh
+arguments = 
+
+# Data handling
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = /home/twenger2/galstruct/galstruct/mcmc_posterior.py, /home/twenger2/galstruct/nn_nsf_2_097_152n_64f_8l_1_024t.pkl
+transfer_output_remaps = "mcmc.pkl = /home/twenger2/galstruct/mcmc_1arm.pkl"
+
+# Logging
+log = /home/twenger2/galstruct/logs/mcmc_1arm_$(Cluster)_$(Process).log
+error = /home/twenger2/galstruct/logs/mcmc_1arm_$(Cluster)_$(Process).err
+output = /home/twenger2/galstruct/logs/mcmc_1arm_$(Cluster)_$(Process).out
+
+# Resource request
+request_cpus = 12
+request_memory = 8GB
+request_disk = 4GB
+
+# Submit job
+queue 1
