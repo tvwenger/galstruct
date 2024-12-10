@@ -122,6 +122,6 @@ def log_like(
     log_prob += glat_prob.log_prob(data[:, 1, None])
     log_prob += vlsr_prob.log_prob(data[:, 2, None])
 
-    # Max along azimuth axis
-    log_prob = torch.max(log_prob, axis=1)[0]
+    # Marginalize over azimuth
+    log_prob = torch.logsumexp(log_prob, 1)
     return log_prob

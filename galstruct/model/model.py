@@ -67,7 +67,6 @@ class Model:
         sigma_arm_plane=tt.tensor(0.0),
         sigmaV=tt.tensor(0.0),
     ):
-
         self.az0 = az0
         self.R0 = R0
         self.a2 = a2  # a2 and a3 are needed for the rotcurve_constraints function to obtain R0a22, lam, loglam, term1, and term2

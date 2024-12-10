@@ -100,10 +100,10 @@ _RMIN = 3.0
 _RMAX = 15.0
 _RREF = 8.0
 _NUM_SPIRALS = 4
-_NITER = 1000
-_NTUNE = 1000
-_NINIT = 100000
-_NUM_CHAINS = 4
+_NITER = 1_000
+_NTUNE = 1_000
+_NINIT = 100_000
+_NUM_CHAINS = 8
 _TARGET_ACCEPT = 0.9
 _FIXED = {}
 _OUTLIERS = None
@@ -636,8 +636,8 @@ if __name__ == "__main__":
         ),
     )
     PARSER.add_argument(
-        "-f",
         "--fixed",
+        action="append",
         nargs="+",
         default=[],
         help=("Fixed GRM parameter names followed by their fixed value."),
@@ -699,7 +699,6 @@ if __name__ == "__main__":
             for PRIOR in DEFAULT_PRIORS:
                 if PRIOR[0] == PARAM:
                     PRIORS[PARAM] = [PRIOR[1]] + [float(v) for v in PRIOR[2:]]
-
     main(
         ARGS["dbfile"],
         ARGS["outfile"],

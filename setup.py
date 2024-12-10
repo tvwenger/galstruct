@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="galstruct",
-    version="0.1.dev1",
+    version="1.0.0",
     description="Modeling Galactic structure",
     author="Trey V. Wenger",
     author_email="tvwenger@gmail.com",

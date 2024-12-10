@@ -1,0 +1,4 @@
+On scylla:
+MAF 50 Features, 5 Layers, 50 training set takes 4 min (10k), 45 min (100k), 810 min (1m)
+--> increases linearly
+NSF is 2x slower: 9 min (10k), 90 min (100k), ... should be done around 8 PM

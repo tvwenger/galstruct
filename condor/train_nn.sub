@@ -1,0 +1,28 @@
+# HTC Submit File
+# Train SBI NNs using NSF
+
+requirements = (HasCHTCStaging == true)
+container_image = file:///staging/twenger2/galstruct-v1.0.3.sif
+
+# Executable
+executable = /home/twenger2/galstruct/condor/train_nn.sh
+arguments = $(density) $(nsims) $(nfeatures) $(nlayers) $(batchsize)
+
+# Data handling
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = /home/twenger2/galstruct/galstruct/learn_likelihood.py
+transfer_output_remaps = "nn.pkl = /home/twenger2/galstruct/nn_$(density)_$(nsims)n_$(nfeatures)f_$(nlayers)l_$(batchsize)t.pkl"
+
+# Logging
+log = /home/twenger2/galstruct/logs/train_nn_$(Cluster)_$(Process).log
+error = /home/twenger2/galstruct/logs/train_nn_$(Cluster)_$(Process).err
+output = /home/twenger2/galstruct/logs/train_nn_$(Cluster)_$(Process).out
+
+# Resource request
+request_cpus = 8
+request_memory = 8GB
+request_disk = 64GB
+
+# Up to 1000 spectra
+queue density,nsims,nfeatures,nlayers,batchsize from /home/twenger2/galstruct/condor/nn_args.txt

@@ -34,6 +34,7 @@ class LogLikeCalc(torch.nn.Module):
         self.num_spirals = num_spirals
 
         self.free_params = []
+        self.free_other_params = []
         for p in _params:
             if p in fixed:
                 setattr(self, p, torch.nn.Parameter(torch.tensor(fixed[p])))
@@ -42,11 +43,12 @@ class LogLikeCalc(torch.nn.Module):
                     setattr(self, p, torch.nn.Parameter(torch.tensor([0.0] * num_spirals)))
                 else:
                     setattr(self, p, torch.nn.Parameter(torch.tensor(0.0)))
+                    self.free_other_params.append(getattr(self, p))
                 self.free_params.append(getattr(self, p))
 
     def forward(self, data):
         # parameters that do not depend on spiral
-        other_params = [getattr(self, p).reshape(1) for p in _params[3:]]
+        other_params = [p.reshape(1) for p in self.free_other_params]
 
         # stack parameters for each likelihood evaluation
         thetas = [

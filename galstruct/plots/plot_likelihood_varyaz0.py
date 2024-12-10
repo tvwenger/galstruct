@@ -136,7 +136,7 @@ def main(
     # add az0 placeholder to theta. Get range of az0
     like_theta = tt.tensor([0.0] + like_theta)
     all_theta = tt.tensor([0.0] + all_theta)
-    az0s_deg = np.linspace(0.0, 359.0, 360)
+    az0s_deg = np.linspace(0.0, 359.0, 36)
     az0s = np.deg2rad(az0s_deg)
 
     # Load neural network
@@ -193,18 +193,19 @@ def main(
             Rmin=tt.tensor(Rmin),
             Rmax=tt.tensor(Rmax),
             Rref=tt.tensor(Rref),
-            az_bins=1000,
+            az_bins=10000,
         )
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
         ax[1].imshow(
-            logp - logp.max(),
+            logp - np.quantile(logp, 0.99),
             extent=extent,
             origin="lower",
             interpolation="none",
-            vmin=-20.0,
+            vmin=-10.0,
             vmax=0.0,
             aspect="auto",
+            cmap="inferno",
         )
         ax[1].set_xlabel("VLSR (km/s)")
         ax[1].set_xlim(-150.0, 150.0)
@@ -216,13 +217,14 @@ def main(
         logp = logp.detach().numpy()
         logp = logp.reshape(glong_grid.shape)
         cax3 = ax[2].imshow(
-            logp - logp.max(),
+            logp - np.quantile(logp, 0.99),
             extent=extent,
             origin="lower",
             interpolation="none",
-            vmin=-20.0,
+            vmin=-10.0,
             vmax=0.0,
             aspect="auto",
+            cmap="inferno",
         )
         ax[2].set_xlabel("VLSR (km/s)")
         ax[2].set_xlim(-150.0, 150.0)
