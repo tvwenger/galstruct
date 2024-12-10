@@ -34,7 +34,11 @@ import torch
 
 import sbi.utils
 from sbi.inference import NLE_A
-from sbi.utils.user_input_checks import check_sbi_inputs, process_prior, process_simulator
+from sbi.utils.user_input_checks import (
+    check_sbi_inputs,
+    process_prior,
+    process_simulator,
+)
 from sbi.neural_nets import likelihood_nn
 
 from galstruct.model.simulator import simulator
@@ -150,7 +154,11 @@ def main(
     else:
         raise ValueError("Invalid density estimator: {0}".format(density_estimator))
     print("Learning likelihood with {0} density estimator".format(de))
-    print("{0} hidden features, and {1} transform layers.".format(hidden_features, transform_layers))
+    print(
+        "{0} hidden features, and {1} transform layers.".format(
+            hidden_features, transform_layers
+        )
+    )
     density_estimator_build_fun = likelihood_nn(
         model=density_estimator,
         hidden_features=hidden_features,
@@ -170,7 +178,9 @@ def main(
     x = x[~isnan]
     theta = theta[~isnan]
     print("Training with batch size: {0}".format(training_batch_size))
-    density_estimator = inference.append_simulations(theta, x).train(training_batch_size=training_batch_size)
+    density_estimator = inference.append_simulations(theta, x).train(
+        training_batch_size=training_batch_size
+    )
     posterior = inference.build_posterior(density_estimator)
 
     # Save
@@ -192,7 +202,9 @@ if __name__ == "__main__":
         prog="learn_likelihood.py",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    PARSER.add_argument("outfile", type=str, help="Where the neural network is stored (.pkl extension)")
+    PARSER.add_argument(
+        "outfile", type=str, help="Where the neural network is stored (.pkl extension)"
+    )
     PARSER.add_argument(
         "-n",
         "--nsims",
@@ -224,8 +236,12 @@ if __name__ == "__main__":
         default=_TRAINING_BATCH_SIZE,
         help="Batch size for training",
     )
-    PARSER.add_argument("--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)")
-    PARSER.add_argument("--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)")
+    PARSER.add_argument(
+        "--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)"
+    )
+    PARSER.add_argument(
+        "--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)"
+    )
     PARSER.add_argument(
         "--Rref",
         type=float,
@@ -267,9 +283,14 @@ if __name__ == "__main__":
         action="append",
         nargs="+",
         default=[],
-        help=("Fixed parameter names followed by their fixed value " + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"),
+        help=(
+            "Fixed parameter names followed by their fixed value "
+            + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"
+        ),
     )
-    PARSER.add_argument("--overwrite", action="store_true", help="Overwrite existing outfile")
+    PARSER.add_argument(
+        "--overwrite", action="store_true", help="Overwrite existing outfile"
+    )
     ARGS = vars(PARSER.parse_args())
 
     # Generate priors dictionary
