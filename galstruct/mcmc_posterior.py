@@ -130,9 +130,7 @@ def main(
     num_chains=_NUM_CHAINS,
     target_accept=_TARGET_ACCEPT,
     fixed=_FIXED,
-    outliers=_OUTLIERS,
     overwrite=_OVERWRITE,
-    hiidb="/data/hii_v2_20201203.db",
 ):
     """
     Use MCMC to generate spiral model posteriors for real or
@@ -190,8 +188,6 @@ def main(
         Desired acceptance rate (0 to 1)
       fixed :: dictionary
         Fixed GRM parameters (keys) and their fixed values.
-      outliers :: list of strings
-        Remove sources with these gnames from the analysis
       overwrite :: boolean
         If True, overwrite outfile if it exists.
 
@@ -229,6 +225,7 @@ def main(
     else:
         print(f"Reading HII region data from {datafile}")
         data = pd.read_csv(datafile)
+        data = torch.as_tensor(data[["glong", "glat", "vlsr"]].to_numpy()).float()
 
     # Get likelihood neural network object
     with open(loglike_net, "rb") as f:
@@ -448,13 +445,6 @@ if __name__ == "__main__":
         default=[],
         help=("Fixed GRM parameter names followed by their fixed value."),
     )
-    PARSER.add_argument(
-        "-o",
-        "--outliers",
-        nargs="+",
-        default=_OUTLIERS,
-        help="HII regions to exclude from analysis",
-    )
     PARSER.add_argument("--chains", type=int, default=_NUM_CHAINS, help="Number of Markov chains")
     PARSER.add_argument("--ntune", type=int, default=_NTUNE, help="Number of MCMC tuning iterations")
     PARSER.add_argument("--ninit", type=int, default=_NINIT, help="Number of ADVI initialzation samples")
@@ -525,6 +515,5 @@ if __name__ == "__main__":
         num_chains=ARGS["chains"],
         target_accept=ARGS["target_accept"],
         fixed=FIXED,
-        outliers=ARGS["outliers"],
         overwrite=ARGS["overwrite"],
     )
