@@ -213,7 +213,7 @@ class BaseModel:
         sigma_arm_height :: spiral FWHM physical width perpendicular to plane (kpc)
         """
         
-        glong, glat, vlsr, dist = self.model(R, az)
+        glong, glat, vlsr, dist = self.model(az, R)
 
         sigma2_glong = tt.zeros_like(glong)
         sigma2_glat = calc_sigma2_glat(dist, self.sigma_arm_height)
@@ -239,7 +239,7 @@ class BaseModel:
         R_sel = tt.gather(R, 1, idx)[:,0]
         az = tt.tensor([np.random.uniform(0.0, 2.0*np.pi, size=(num_sims))])[0]
     
-        glong, glat, vlsr, dist, sigma2_glong, sigma2_glat = self.model_spread(R, az)
+        glong, glat, vlsr, dist, sigma2_glong, sigma2_glat = self.model_spread(az, R)
     
         return glong, glat, vlsr, dist
 
@@ -288,7 +288,7 @@ class SpiralModel(BaseModel):
         if R is None:
             R = self.Rref * tt.exp((self.az0 - az) * tt.tan(self.pitch))
             
-        return super().model(R, az)
+        return super().model(az, R)
     
     def model_spread(self, az):
 
@@ -301,7 +301,7 @@ class SpiralModel(BaseModel):
         """
         
         R = self.Rref * tt.exp((self.az0 - az) * tt.tan(self.pitch))
-        glong, glat, vlsr, dist, sigma2_glong, sigma2_glat = super().model_spread(R, az)
+        glong, glat, vlsr, dist, sigma2_glong, sigma2_glat = super().model_spread(az, R)
         
         # update sigma2_glong
         angle = calc_spiral_angle(az, dist, self.pitch, self.R0)
