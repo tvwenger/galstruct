@@ -57,10 +57,10 @@ class BaseModel:
         sigma_arm_height=tt.tensor(0.0),
         sigmaV=tt.tensor(0.0),
 
-        #parameters defining the shape of the exponential disk TODO: CHANGE THESE PARAMETERS TO ACCEPTABLE DEFAULTS
-        I2 = 15,
-        Rs = 5,
-        Rc = 2,
+        #parameters defining the shape of the exponential disk, from Trey's thesis
+        I2 = 35,
+        Rs = 4.5,
+        Rc = 2.75,
     ):
         self.R0 = R0
         self.a2 = a2  # a2 and a3 are needed for the rotcurve_constraints function to obtain R0a22, lam, loglam, term1, and term2
