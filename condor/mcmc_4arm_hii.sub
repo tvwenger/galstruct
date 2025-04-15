@@ -3,6 +3,7 @@
 
 requirements = (HasCHTCStaging == true)
 container_image = file:///staging/twenger2/galstruct-v1.0.4.sif
++LongJob = true
 
 # Executable
 executable = /home/twenger2/galstruct/condor/mcmc_4arm_hii.sh
