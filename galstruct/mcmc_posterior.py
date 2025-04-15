@@ -49,6 +49,7 @@ pytensor.config.floatX = "float32"
 
 import torch
 import pymc as pm
+from pymc.variational.callbacks import CheckParametersConvergence
 
 from galstruct.model.simulator import simulator
 
@@ -131,6 +132,7 @@ def main(
     target_accept=_TARGET_ACCEPT,
     fixed=_FIXED,
     overwrite=_OVERWRITE,
+    fit=False,
 ):
     """
     Use MCMC to generate spiral model posteriors for real or
@@ -190,6 +192,8 @@ def main(
         Fixed GRM parameters (keys) and their fixed values.
       overwrite :: boolean
         If True, overwrite outfile if it exists.
+      fit :: boolean
+        If True, run VI instead of MCMC
 
     Returns: Nothing
     """
@@ -225,6 +229,8 @@ def main(
     else:
         print(f"Reading HII region data from {datafile}")
         data = pd.read_csv(datafile)
+        data = data.assign(glong=np.deg2rad(data["glong"]))
+        data = data.assign(glat=np.deg2rad(data["glat"]))
         data = torch.as_tensor(data[["glong", "glat", "vlsr"]].to_numpy()).float()
 
     # Get likelihood neural network object
@@ -322,16 +328,29 @@ def main(
 
     # Run inference
     with model:
-        trace = pm.sample(
-            niter,
-            init="auto",
-            # init="advi",
-            tune=ntune,
-            n_init=ninit,
-            cores=num_chains,
-            chains=num_chains,
-            target_accept=target_accept,
-        )
+        if fit:
+            callbacks = [
+                CheckParametersConvergence(tolerance=0.01, diff="relative"),
+                CheckParametersConvergence(tolerance=0.01, diff="absolute"),
+            ]
+            approx = pm.fit(
+                n=10_000,
+                progressbar=True,
+                callbacks=callbacks,
+                obj_optimizer=pm.adagrad_window(learning_rate=0.1),
+            )
+            trace = approx.sample(niter)
+        else:
+            trace = pm.sample(
+                niter,
+                init="auto",
+                #init="advi+adapt_diag",
+                tune=ntune,
+                n_init=ninit,
+                cores=num_chains,
+                chains=num_chains,
+                target_accept=target_accept,
+            )
         with open(outfile, "wb") as f:
             dill.dump({"data": data, "trace": trace}, f)
     print(pm.summary(trace).to_string())
@@ -455,6 +474,9 @@ if __name__ == "__main__":
         help="Desired acceptance rate.",
     )
     PARSER.add_argument("--overwrite", action="store_true", help="Overwrite existing outfile")
+    PARSER.add_argument(
+        "--fit", action="store_true", help="Fit with VI instead of MCMC"
+    )
     ARGS = vars(PARSER.parse_args())
 
     # Generate priors dictionary
@@ -516,4 +538,5 @@ if __name__ == "__main__":
         target_accept=ARGS["target_accept"],
         fixed=FIXED,
         overwrite=ARGS["overwrite"],
+        fit=ARGS["fit"],
     )
