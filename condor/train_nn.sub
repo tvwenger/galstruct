@@ -2,7 +2,8 @@
 # Train SBI NNs using NSF
 
 requirements = (HasCHTCStaging == true)
-container_image = file:///staging/twenger2/galstruct-v1.0.3.sif
+container_image = file:///staging/twenger2/galstruct-v1.0.4.sif
++LongJob = True
 
 # Executable
 executable = /home/twenger2/galstruct/condor/train_nn.sh
@@ -18,11 +19,12 @@ transfer_output_remaps = "nn.pkl = /home/twenger2/galstruct/nn_$(density)_$(nsim
 log = /home/twenger2/galstruct/logs/train_nn_$(Cluster)_$(Process).log
 error = /home/twenger2/galstruct/logs/train_nn_$(Cluster)_$(Process).err
 output = /home/twenger2/galstruct/logs/train_nn_$(Cluster)_$(Process).out
+stream_output = True
+stream_error = True
 
 # Resource request
-request_cpus = 8
+request_cpus = 16
 request_memory = 8GB
 request_disk = 64GB
 
-# Up to 1000 spectra
 queue density,nsims,nfeatures,nlayers,batchsize from /home/twenger2/galstruct/condor/nn_args.txt

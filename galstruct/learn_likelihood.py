@@ -49,8 +49,8 @@ _DENSITY_ESTIMATOR = "maf"
 _HIDDEN_FEATURES = 50
 _TRANSFORM_LAYERS = 5
 _TRAINING_BATCH_SIZE = 50
-_RMIN = 3.0
-_RMAX = 15.0
+_RMIN = 1.0
+_RMAX = 25.0
 _RREF = 8.0
 _FIXED = {}
 _OVERWRITE = False
@@ -245,11 +245,11 @@ if __name__ == "__main__":
         help="Reference Galactocentric radius (kpc)",
     )
     DEFAULT_PRIORS = [
-        ["az0", "uniform", 0.0, 6.3],
-        ["pitch", "uniform", 0.1, 0.4],
+        ["az0", "uniform", -np.pi, np.pi],
+        ["pitch", "uniform", 0.1, 0.6],
         ["sigmaV", "halfnormal", 10.0],
         ["sigma_arm_plane", "halfnormal", 1.0],
-        ["sigma_arm_height", "halfnormal", 0.5],
+        ["sigma_arm_height", "halfnormal", 0.1],
         ["R0", "normal", 8.5, 0.5],
         ["Usun", "normal", 10.5, 1.0],
         ["Vsun", "normal", 12.2, 10.0],

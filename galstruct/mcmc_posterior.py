@@ -50,6 +50,7 @@ pytensor.config.floatX = "float32"
 import torch
 import pymc as pm
 from pymc.variational.callbacks import CheckParametersConvergence
+from pymc.distributions.transforms import CircularTransform
 
 from galstruct.model.simulator import simulator
 
@@ -245,10 +246,16 @@ def main(
             if param in fixed:
                 continue
             num = 1
+
             shape = ()
             if param in ["q", "az0", "pitch"]:
                 num = num_spirals
                 shape = (num,)
+
+            transform = None
+            if param == "az0":
+                transform = CircularTransform()
+
             if priors[param][0] == "fixed":
                 fixed[param] = np.array(priors[param][1:])
             elif priors[param][0] == "dirichlet":
@@ -265,12 +272,26 @@ def main(
                 if len(shape) == 0:
                     lower = lower[0]
                     upper = upper[0]
-                determ[param] = pm.Uniform(
-                    param,
-                    lower=lower.astype(np.float32),
-                    upper=upper.astype(np.float32),
-                    shape=shape,
-                )
+                if param == "az0":
+                    az0_norm = pm.Uniform(
+                        "az0_norm",
+                        lower=lower.astype(np.float32),
+                        upper=upper.astype(np.float32),
+                        shape=shape,
+                        transform=transform,
+                    )
+                    determ[param] = pm.Deterministic(
+                        param,
+                        az0_norm + np.pi,
+                    )
+                else:
+                    determ[param] = pm.Uniform(
+                        param,
+                        lower=lower.astype(np.float32),
+                        upper=upper.astype(np.float32),
+                        shape=shape,
+                        transform=transform,
+                    )
             elif priors[param][0] == "normal":
                 mean = np.array(priors[param][1 : 2 * num + 1 : 2])
                 sigma = np.array(priors[param][2 : 2 * num + 1 : 2])
@@ -282,6 +303,7 @@ def main(
                     mu=mean.astype(np.float32),
                     sigma=sigma.astype(np.float32),
                     shape=shape,
+                    transform=transform,
                 )
             elif priors[param][0] == "cauchy":
                 alpha = np.array(priors[param][1 : 2 * num + 1 : 2])
@@ -294,6 +316,7 @@ def main(
                     alpha=alpha.astype(np.float32),
                     beta=beta.astype(np.float32),
                     shape=shape,
+                    transform=transform,
                 )
             elif priors[param][0] == "halfnormal":
                 sigma = np.array(priors[param][1 : num + 1])
@@ -303,6 +326,7 @@ def main(
                     param,
                     sigma=sigma.astype(np.float32),
                     shape=shape,
+                    transform=transform,
                 )
             elif priors[param][0] == "halfcauchy":
                 beta = np.array(priors[param][1 : num + 1])
@@ -312,6 +336,7 @@ def main(
                     param,
                     beta=beta.astype(np.float32),
                     shape=shape,
+                    transform=transform,
                 )
             else:
                 raise ValueError("Invalid prior for {0}: {1}".format(param, priors[param][0]))
@@ -337,7 +362,7 @@ def main(
                 n=10_000,
                 progressbar=True,
                 callbacks=callbacks,
-                obj_optimizer=pm.adagrad_window(learning_rate=0.1),
+                obj_optimizer=pm.adagrad_window(learning_rate=0.01),
             )
             trace = approx.sample(niter)
         else:
@@ -429,7 +454,7 @@ if __name__ == "__main__":
     PARSER.add_argument("--num_spirals", type=int, default=_NUM_SPIRALS, help="Number of spiral arms")
     DEFAULT_PRIORS = [
         ["q", "dirichlet"],
-        ["az0", "uniform", 0.0, 1.5, 1.5, 3.2, 3.2, 4.7, 4.7, 6.3],
+        ["az0", "uniform", -np.pi, np.pi, -np.pi, np.pi, -np.pi, np.pi, -np.pi, np.pi],
         ["pitch", "uniform", 0.1, 0.4, 0.1, 0.4, 0.1, 0.4, 0.1, 0.4],
         ["sigmaV", "halfnormal", 10.0],
         ["sigma_arm_plane", "halfnormal", 1.0],

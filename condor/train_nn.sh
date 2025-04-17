@@ -6,6 +6,7 @@ python learn_likelihood.py \
     --features $3 \
     --layers $4 \
     --training_batch_size $5 \
+    --fixed R0 8.15 \
     --fixed Zsun 5.5 \
     --fixed roll 0.0 \
     --overwrite \
