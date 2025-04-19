@@ -73,7 +73,7 @@ _spiral_params = [
     np.deg2rad(14.0),
     5.0,  # sigmaV
     0.5,  # sigma_arm_plane
-    0.1,  # sigma_arm_height
+    0.05,  # sigma_arm_height
 ]
 
 # default values for GRM parameters
@@ -98,17 +98,16 @@ _disk_params = [35.0, 3.0, 2.5]
 
 # default parameter values
 _NUM_DATA = 2000
-_RMIN = 3.0
-_RMAX = 15.0
+_RMIN = 1.0
+_RMAX = 25.0
 _RREF = 8.0
 _NUM_SPIRALS = 4
 _NITER = 1_000
 _NTUNE = 1_000
 _NINIT = 100_000
 _NUM_CHAINS = 8
-_TARGET_ACCEPT = 0.9
+_TARGET_ACCEPT = 0.8
 _FIXED = {}
-_OUTLIERS = None
 _OVERWRITE = False
 
 
@@ -239,7 +238,7 @@ def main(
         net = pickle.load(f)
 
     # Setup model
-    with pm.Model() as model:
+    with pm.Model(coords={"spiral": np.arange(num_spirals)}) as model:
         # Get parameter priors
         determ = {}
         for param in priors:
@@ -247,9 +246,11 @@ def main(
                 continue
             num = 1
 
+            dims = None
             shape = ()
             if param in ["q", "az0", "pitch"]:
                 num = num_spirals
+                dims = ["spiral"]
                 shape = (num,)
 
             transform = None
@@ -258,40 +259,28 @@ def main(
 
             if priors[param][0] == "fixed":
                 fixed[param] = np.array(priors[param][1:])
+
             elif priors[param][0] == "dirichlet":
                 if num > 1:
                     determ[param] = pm.Dirichlet(
-                        param,
-                        a=np.ones(num).astype(np.float32),
+                        param, a=np.ones(num).astype(np.float32), dims=dims
                     )
                 else:
                     fixed[param] = np.array([1.0])
+
             elif priors[param][0] == "uniform":
                 lower = np.array(priors[param][1 : 2 * num + 1 : 2])
                 upper = np.array(priors[param][2 : 2 * num + 1 : 2])
                 if len(shape) == 0:
                     lower = lower[0]
                     upper = upper[0]
-                if param == "az0":
-                    az0_norm = pm.Uniform(
-                        "az0_norm",
-                        lower=lower.astype(np.float32),
-                        upper=upper.astype(np.float32),
-                        shape=shape,
-                        transform=transform,
-                    )
-                    determ[param] = pm.Deterministic(
-                        param,
-                        az0_norm + np.pi,
-                    )
-                else:
-                    determ[param] = pm.Uniform(
-                        param,
-                        lower=lower.astype(np.float32),
-                        upper=upper.astype(np.float32),
-                        shape=shape,
-                        transform=transform,
-                    )
+                determ[param] = pm.Uniform(
+                    param,
+                    lower=lower.astype(np.float32),
+                    upper=upper.astype(np.float32),
+                    dims=dims,
+                    transform=transform,
+                )
             elif priors[param][0] == "normal":
                 mean = np.array(priors[param][1 : 2 * num + 1 : 2])
                 sigma = np.array(priors[param][2 : 2 * num + 1 : 2])
@@ -302,7 +291,7 @@ def main(
                     param,
                     mu=mean.astype(np.float32),
                     sigma=sigma.astype(np.float32),
-                    shape=shape,
+                    dims=dims,
                     transform=transform,
                 )
             elif priors[param][0] == "cauchy":
@@ -315,7 +304,7 @@ def main(
                     param,
                     alpha=alpha.astype(np.float32),
                     beta=beta.astype(np.float32),
-                    shape=shape,
+                    dims=dims,
                     transform=transform,
                 )
             elif priors[param][0] == "halfnormal":
@@ -325,7 +314,7 @@ def main(
                 determ[param] = pm.HalfNormal(
                     param,
                     sigma=sigma.astype(np.float32),
-                    shape=shape,
+                    dims=dims,
                     transform=transform,
                 )
             elif priors[param][0] == "halfcauchy":
@@ -335,11 +324,13 @@ def main(
                 determ[param] = pm.HalfCauchy(
                     param,
                     beta=beta.astype(np.float32),
-                    shape=shape,
+                    dims=dims,
                     transform=transform,
                 )
             else:
-                raise ValueError("Invalid prior for {0}: {1}".format(param, priors[param][0]))
+                raise ValueError(
+                    "Invalid prior for {0}: {1}".format(param, priors[param][0])
+                )
 
         # Pack model parameters
         theta = [determ[p] for p in _params if p not in fixed]
@@ -350,6 +341,8 @@ def main(
 
         # Evalulate likelihood
         _ = pm.Potential("like", loglike_op(*theta)[0])
+
+    print(pm.str_for_model(model))
 
     # Run inference
     with model:
@@ -368,8 +361,9 @@ def main(
         else:
             trace = pm.sample(
                 niter,
-                init="auto",
-                #init="advi+adapt_diag",
+                # init="auto",
+                init="adapt_diag",
+                # init="advi+adapt_diag",
                 tune=ntune,
                 n_init=ninit,
                 cores=num_chains,
@@ -443,22 +437,28 @@ if __name__ == "__main__":
         default=_disk_params,
         help="Exponential disk parameters for synthetic data",
     )
-    PARSER.add_argument("--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)")
-    PARSER.add_argument("--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)")
+    PARSER.add_argument(
+        "--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)"
+    )
+    PARSER.add_argument(
+        "--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)"
+    )
     PARSER.add_argument(
         "--Rref",
         type=float,
         default=_RREF,
         help="Reference Galactocentric radius (kpc)",
     )
-    PARSER.add_argument("--num_spirals", type=int, default=_NUM_SPIRALS, help="Number of spiral arms")
+    PARSER.add_argument(
+        "--num_spirals", type=int, default=_NUM_SPIRALS, help="Number of spiral arms"
+    )
     DEFAULT_PRIORS = [
         ["q", "dirichlet"],
         ["az0", "uniform", -np.pi, np.pi, -np.pi, np.pi, -np.pi, np.pi, -np.pi, np.pi],
-        ["pitch", "uniform", 0.1, 0.4, 0.1, 0.4, 0.1, 0.4, 0.1, 0.4],
+        ["pitch", "uniform", 0.1, 0.6, 0.1, 0.6, 0.1, 0.6, 0.1, 0.6],
         ["sigmaV", "halfnormal", 10.0],
         ["sigma_arm_plane", "halfnormal", 1.0],
-        ["sigma_arm_height", "halfnormal", 0.5],
+        ["sigma_arm_height", "halfnormal", 0.1],
         ["R0", "normal", 8.5, 0.5],
         ["Usun", "normal", 10.5, 1.0],
         ["Vsun", "normal", 12.2, 10.0],
@@ -489,16 +489,24 @@ if __name__ == "__main__":
         default=[],
         help=("Fixed GRM parameter names followed by their fixed value."),
     )
-    PARSER.add_argument("--chains", type=int, default=_NUM_CHAINS, help="Number of Markov chains")
-    PARSER.add_argument("--ntune", type=int, default=_NTUNE, help="Number of MCMC tuning iterations")
-    PARSER.add_argument("--ninit", type=int, default=_NINIT, help="Number of ADVI initialzation samples")
+    PARSER.add_argument(
+        "--chains", type=int, default=_NUM_CHAINS, help="Number of Markov chains"
+    )
+    PARSER.add_argument(
+        "--ntune", type=int, default=_NTUNE, help="Number of MCMC tuning iterations"
+    )
+    PARSER.add_argument(
+        "--ninit", type=int, default=_NINIT, help="Number of ADVI initialzation samples"
+    )
     PARSER.add_argument(
         "--target_accept",
         type=float,
         default=_TARGET_ACCEPT,
         help="Desired acceptance rate.",
     )
-    PARSER.add_argument("--overwrite", action="store_true", help="Overwrite existing outfile")
+    PARSER.add_argument(
+        "--overwrite", action="store_true", help="Overwrite existing outfile"
+    )
     PARSER.add_argument(
         "--fit", action="store_true", help="Fit with VI instead of MCMC"
     )

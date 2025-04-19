@@ -59,7 +59,15 @@ _params = [
 ]
 
 
-def main(net_fname, num_sims=1000, Rmin=3.0, Rmax=15.0, Rref=8.0, fixed={}, disk=None):
+def main(
+    net_fname,
+    num_sims=10000,
+    Rmin=1.0,
+    Rmax=25.0,
+    Rref=8.0,
+    fixed={},
+    disk=[35.0, 4.5, 2.75],
+):
     """
     Test neural network by computing the likelihood probability
     of simulated datasets drawn from the model to the likelihood
@@ -96,7 +104,14 @@ def main(net_fname, num_sims=1000, Rmin=3.0, Rmax=15.0, Rref=8.0, fixed={}, disk
 
     # Simulate
     print("Simulating...")
-    x = simulator(theta, Rmin=tt.tensor(Rmin), Rmax=tt.tensor(Rmax), Rref=tt.tensor(Rref), fixed=fixed, disk=disk)
+    x = simulator(
+        theta,
+        Rmin=tt.tensor(Rmin),
+        Rmax=tt.tensor(Rmax),
+        Rref=tt.tensor(Rref),
+        fixed=fixed,
+        disk=disk,
+    )
     isnan = tt.any(tt.isnan(x), axis=1)
     print(f"Dropping {isnan.sum()} simulations with NaNs")
     x = x[~isnan]
@@ -148,7 +163,9 @@ def main(net_fname, num_sims=1000, Rmin=3.0, Rmax=15.0, Rref=8.0, fixed={}, disk
     # Calculate statistic
     stat = anderson_ksamp([logp_true, logp_net])
 
-    fig, axes = plt.subplots(2, layout="constrained", figsize=(6, 8), sharex=True, sharey=True)
+    fig, axes = plt.subplots(
+        2, layout="constrained", figsize=(6, 8), sharex=True, sharey=True
+    )
     axes[0].ecdf(logp_true, color="k", label="True")
     axes[0].ecdf(logp_net, color="r", label="Network")
     axes[0].set_ylabel("CDF")
@@ -231,13 +248,18 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     PARSER.add_argument("net", type=str, help="Neural network pickle filename")
-    PARSER.add_argument("--outdir", type=str, default="frames", help="Directory where images are saved")
+    PARSER.add_argument(
+        "--outdir", type=str, default="frames", help="Directory where images are saved"
+    )
     PARSER.add_argument(
         "--fixed",
         action="append",
         nargs=2,
         default=[],
-        help=("Fixed parameter names followed by their fixed value " + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"),
+        help=(
+            "Fixed parameter names followed by their fixed value "
+            + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"
+        ),
     )
     ARGS = vars(PARSER.parse_args())
     FIXED = {}

@@ -5,7 +5,7 @@ plot_likelihood_varyaz0.py
 
 Generate animation (for varying az0 values) of simulated data, data sampled from the learned
 likelihood, a grid of the true likelihood, and a grid of the
-learned likelihood. 
+learned likelihood.
 
 Each reference azimuth frame is saved to outdir
 with prefix frame_*, and can be combined into a gif with:
@@ -67,7 +67,7 @@ _THETA = [
     0.25,  # pitch
     5.0,  # sigmaV
     0.5,
-    0.1,
+    0.05,
     8.166,
     10.444,
     12.007,
@@ -88,8 +88,8 @@ def main(
     num_data=500,
     theta=_THETA,
     outdir="frames",
-    Rmin=3.0,
-    Rmax=15.0,
+    Rmin=1.0,
+    Rmax=25.0,
     Rref=8.0,
     fixed={},
 ):
@@ -232,7 +232,12 @@ def main(
         ax[2].set_title("Learned")
 
         # Sampled data
-        data = net["density_estimator"].sample((num_data,), like_theta[None])[:, 0, :].detach().numpy()
+        data = (
+            net["density_estimator"]
+            .sample((num_data,), like_theta[None])[:, 0, :]
+            .detach()
+            .numpy()
+        )
         cax1 = ax[3].scatter(
             data[:, 2],
             np.rad2deg(data[:, 0]),
@@ -249,7 +254,9 @@ def main(
         # Add colorbars
         fig.canvas.draw_idle()
         cbar_ax1 = fig.add_axes([0.075, 0.1, 0.45, 0.025])
-        plt.colorbar(cax1, cax=cbar_ax1, orientation="horizontal", label="Latitude (deg)")
+        plt.colorbar(
+            cax1, cax=cbar_ax1, orientation="horizontal", label="Latitude (deg)"
+        )
         cbar_ax2 = fig.add_axes([0.5375, 0.1, 0.45, 0.025])
         plt.colorbar(
             cax3,
@@ -269,13 +276,18 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     PARSER.add_argument("net", type=str, help="Neural network pickle filename")
-    PARSER.add_argument("--outdir", type=str, default="frames", help="Directory where images are saved")
+    PARSER.add_argument(
+        "--outdir", type=str, default="frames", help="Directory where images are saved"
+    )
     PARSER.add_argument(
         "--fixed",
         action="append",
         nargs="+",
         default=[],
-        help=("Fixed parameter names followed by their fixed value " + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"),
+        help=(
+            "Fixed parameter names followed by their fixed value "
+            + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"
+        ),
     )
     ARGS = vars(PARSER.parse_args())
     FIXED = {}
