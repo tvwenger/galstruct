@@ -6,7 +6,7 @@ PYTENSOR_FLAGS="base_compiledir=$tmpdir" python mcmc_posterior.py \
     mcmc.pkl \
     $1 \
     -n 1_000 \
-    --chains 4 \
+    --chains 12 \
     --ntune 1_000 \
     --ninit 100_000 \
     --target_accept 0.80 \
