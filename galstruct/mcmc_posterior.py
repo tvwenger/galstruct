@@ -50,7 +50,6 @@ pytensor.config.floatX = "float32"
 import torch
 import pymc as pm
 from pymc.variational.callbacks import CheckParametersConvergence
-from pymc.distributions.transforms import CircularTransform
 
 from galstruct.model.simulator import simulator
 
@@ -253,18 +252,14 @@ def main(
                 dims = ["spiral"]
                 shape = (num,)
 
-            transform = None
-            if param == "az0":
-                transform = CircularTransform()
-
             if priors[param][0] == "fixed":
                 fixed[param] = np.array(priors[param][1:])
 
             elif priors[param][0] == "dirichlet":
+                concentration = priors[param][1]
                 if num > 1:
-                    determ[param] = pm.Dirichlet(
-                        param, a=np.ones(num).astype(np.float32), dims=dims
-                    )
+                    a = (np.ones(num) / num * concentration).astype(np.float32)
+                    determ[param] = pm.Dirichlet(param, a=a, dims=dims)
                 else:
                     fixed[param] = np.array([1.0])
 
@@ -274,12 +269,30 @@ def main(
                 if len(shape) == 0:
                     lower = lower[0]
                     upper = upper[0]
-                determ[param] = pm.Uniform(
-                    param,
-                    lower=lower.astype(np.float32),
-                    upper=upper.astype(np.float32),
+                lower = lower.astype(np.float32)
+                upper = upper.astype(np.float32)
+                determ[f"{param}_norm"] = pm.Uniform(
+                    f"{param}_norm",
+                    lower=np.zeros_like(lower),
+                    upper=np.ones_like(upper),
                     dims=dims,
-                    transform=transform,
+                )
+                determ[param] = pm.Deterministic(
+                    param,
+                    lower + (upper - lower) * determ[f"{param}_norm"],
+                    dims=dims,
+                )
+            elif priors[param][0] == "vonmises":
+                mu = np.array(priors[param][1 : 2 * num + 1 : 2])
+                kappa = np.array(priors[param][2 : 2 * num + 1 : 2])
+                if len(shape) == 0:
+                    mu = mu[0]
+                    kappa = kappa[0]
+                determ[param] = pm.VonMises(
+                    param,
+                    mu=mu.astype(np.float32),
+                    kappa=kappa.astype(np.float32),
+                    dims=dims,
                 )
             elif priors[param][0] == "normal":
                 mean = np.array(priors[param][1 : 2 * num + 1 : 2])
@@ -287,45 +300,33 @@ def main(
                 if len(shape) == 0:
                     mean = mean[0]
                     sigma = sigma[0]
-                determ[param] = pm.Normal(
-                    param,
-                    mu=mean.astype(np.float32),
-                    sigma=sigma.astype(np.float32),
+                mean = mean.astype(np.float32)
+                sigma = sigma.astype(np.float32)
+                determ[f"{param}_norm"] = pm.Normal(
+                    f"{param}_norm",
+                    mu=np.zeros_like(mean),
+                    sigma=np.ones_like(sigma),
                     dims=dims,
-                    transform=transform,
                 )
-            elif priors[param][0] == "cauchy":
-                alpha = np.array(priors[param][1 : 2 * num + 1 : 2])
-                beta = np.array(priors[param][2 : 2 * num + 1 : 2])
-                if len(shape) == 0:
-                    alpha = alpha[0]
-                    beta = beta[0]
-                determ[param] = pm.Cauchy(
+                determ[param] = pm.Deterministic(
                     param,
-                    alpha=alpha.astype(np.float32),
-                    beta=beta.astype(np.float32),
+                    mean + sigma * determ[f"{param}_norm"],
                     dims=dims,
-                    transform=transform,
                 )
             elif priors[param][0] == "halfnormal":
                 sigma = np.array(priors[param][1 : num + 1])
                 if len(shape) == 0:
                     sigma = sigma[0]
-                determ[param] = pm.HalfNormal(
-                    param,
-                    sigma=sigma.astype(np.float32),
+                sigma = sigma.astype(np.float32)
+                determ[f"{param}_norm"] = pm.HalfNormal(
+                    f"{param}_norm",
+                    sigma=np.ones_like(sigma),
                     dims=dims,
-                    transform=transform,
                 )
-            elif priors[param][0] == "halfcauchy":
-                beta = np.array(priors[param][1 : num + 1])
-                if len(shape) == 0:
-                    beta = beta[0]
-                determ[param] = pm.HalfCauchy(
+                determ[param] = pm.Deterministic(
                     param,
-                    beta=beta.astype(np.float32),
+                    sigma * determ[f"{param}_norm"],
                     dims=dims,
-                    transform=transform,
                 )
             else:
                 raise ValueError(
@@ -361,14 +362,16 @@ def main(
         else:
             trace = pm.sample(
                 niter,
-                # init="auto",
-                init="adapt_diag",
+                init="auto",
+                # init="advi+adapt_diag",
+                # init="adapt_diag",
                 # init="advi+adapt_diag",
                 tune=ntune,
                 n_init=ninit,
                 cores=num_chains,
                 chains=num_chains,
                 target_accept=target_accept,
+                progressbar=True,
             )
         with open(outfile, "wb") as f:
             dill.dump({"data": data, "trace": trace}, f)
@@ -453,8 +456,8 @@ if __name__ == "__main__":
         "--num_spirals", type=int, default=_NUM_SPIRALS, help="Number of spiral arms"
     )
     DEFAULT_PRIORS = [
-        ["q", "dirichlet"],
-        ["az0", "uniform", -np.pi, np.pi, -np.pi, np.pi, -np.pi, np.pi, -np.pi, np.pi],
+        ["q", "dirichlet", 5.0],
+        ["az0", "vonmises", 0.0, 0.01, 0.0, 0.01, 0.0, 0.01, 0.0, 0.01],
         ["pitch", "uniform", 0.1, 0.6, 0.1, 0.6, 0.1, 0.6, 0.1, 0.6],
         ["sigmaV", "halfnormal", 10.0],
         ["sigma_arm_plane", "halfnormal", 1.0],
