@@ -93,10 +93,12 @@ class Model:
         self.tilt = tt.asin(self.Zsun / self.R0 / 1000.0)
         self.cos_tilt, self.sin_tilt = tt.cos(self.tilt), tt.sin(self.tilt)
         self.cos_roll, self.sin_roll = tt.cos(self.roll), tt.sin(self.roll)
-        self.R0a22, self.lam, self.loglam, self.term1, self.term2 = rotcurve.rotcurve_constants(
-            self.R0, self.a2, self.a3
+        self.R0a22, self.lam, self.loglam, self.term1, self.term2 = (
+            rotcurve.rotcurve_constants(self.R0, self.a2, self.a3)
         )
-        self.theta0 = rotcurve.calc_theta(self.R0, self.R0a22, self.lam, self.loglam, self.term1, self.term2)
+        self.theta0 = rotcurve.calc_theta(
+            self.R0, self.R0a22, self.lam, self.loglam, self.term1, self.term2
+        )
 
     def model_vlsr(
         self,
@@ -121,12 +123,18 @@ class Model:
         """
         # Convert distance to R, azimuth
         midplane_dist = dist * cos_glat
-        R = tt.sqrt(self.R0**2.0 + midplane_dist**2.0 - 2.0 * self.R0 * midplane_dist * cos_glong)
+        R = tt.sqrt(
+            self.R0**2.0
+            + midplane_dist**2.0
+            - 2.0 * self.R0 * midplane_dist * cos_glong
+        )
         cos_az = (self.R0 - midplane_dist * cos_glong) / R
         sin_az = midplane_dist * sin_glong / R
 
         # Calculate rotation speed at R
-        theta = rotcurve.calc_theta(R, self.R0a22, self.lam, self.loglam, self.term1, self.term2)
+        theta = rotcurve.calc_theta(
+            R, self.R0a22, self.lam, self.loglam, self.term1, self.term2
+        )
         vR = -self.Upec
         vAz = theta + self.Vpec
 
@@ -146,7 +154,9 @@ class Model:
         )
 
         # Convert velocities to IAU-LSR radial velocity
-        vlsr = transforms.calc_vlsr(cos_glong, sin_glong, cos_glat, sin_glat, vXb, vYb, vZb)
+        vlsr = transforms.calc_vlsr(
+            cos_glong, sin_glong, cos_glat, sin_glat, vXb, vYb, vZb
+        )
         return vlsr
 
     def model(self, az):
@@ -182,11 +192,20 @@ class Model:
 
         # Convert positions to the barycentric Cartesian frame
         Xb, Yb, Zb = transforms.gcencar_to_barycar(
-            Xg, Yg, Zg, self.R0, self.cos_tilt, self.sin_tilt, self.cos_roll, self.sin_roll
+            Xg,
+            Yg,
+            Zg,
+            self.R0,
+            self.cos_tilt,
+            self.sin_tilt,
+            self.cos_roll,
+            self.sin_roll,
         )
 
         # Convert positions to Galactic longitude and latitude
-        cos_glong, sin_glong, cos_glat, sin_glat, dist = transforms.barycar_to_galactic(Xb, Yb, Zb)
+        cos_glong, sin_glong, cos_glat, sin_glat, dist = transforms.barycar_to_galactic(
+            Xb, Yb, Zb
+        )
 
         glong = tt.atan2(sin_glong, cos_glong)
         glat = tt.asin(sin_glat)

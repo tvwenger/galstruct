@@ -115,9 +115,13 @@ def simulator(
 
     if disk is not None:
         # apply exponential disk
-        spiral_az = tt.stack(tuple(tt.linspace(mina, maxa, 1000) for mina, maxa in zip(min_az, max_az)))
+        spiral_az = tt.stack(
+            tuple(tt.linspace(mina, maxa, 1000) for mina, maxa in zip(min_az, max_az))
+        )
         I2, Rs, Rc = disk
-        spiral_R = Rref * tt.exp((params["az0"][:, None] - spiral_az) * tt.tan(params["pitch"][:, None]))
+        spiral_R = Rref * tt.exp(
+            (params["az0"][:, None] - spiral_az) * tt.tan(params["pitch"][:, None])
+        )
         prob = tt.exp(-spiral_R / Rs) / (1.0 + I2 * tt.exp(-spiral_R / Rc))
         prob = prob / tt.sum(prob, axis=1, keepdims=True)
         idx = prob.multinomial(num_samples=1)

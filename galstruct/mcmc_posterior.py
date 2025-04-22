@@ -253,7 +253,11 @@ def main(
                 shape = (num,)
 
             if priors[param][0] == "fixed":
-                fixed[param] = np.array(priors[param][1:])
+                value = np.array(priors[param][1:])
+                if len(shape) == 0:
+                    value = value[0]
+                value = value.astype(np.float32)
+                determ[param] = pm.Data(param, value, dims=dims)
 
             elif priors[param][0] == "dirichlet":
                 concentration = priors[param][1]
@@ -362,9 +366,9 @@ def main(
         else:
             trace = pm.sample(
                 niter,
-                init="auto",
+                # init="auto",
                 # init="advi+adapt_diag",
-                # init="adapt_diag",
+                init="adapt_diag",
                 # init="advi+adapt_diag",
                 tune=ntune,
                 n_init=ninit,
@@ -553,6 +557,8 @@ if __name__ == "__main__":
             for PRIOR in DEFAULT_PRIORS:
                 if PRIOR[0] == PARAM:
                     PRIORS[PARAM] = [PRIOR[1]] + [float(v) for v in PRIOR[2:]]
+    print("PRIORS: ", PRIORS)
+    print("FIXED: ", FIXED)
     main(
         ARGS["dbfile"],
         ARGS["outfile"],

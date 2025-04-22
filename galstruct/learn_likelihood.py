@@ -32,9 +32,12 @@ import numpy as np
 
 import torch
 
-import sbi.utils
 from sbi.inference import NLE_A
-from sbi.utils.user_input_checks import check_sbi_inputs, process_prior, process_simulator
+from sbi.utils.user_input_checks import (
+    check_sbi_inputs,
+    process_prior,
+    process_simulator,
+)
 from sbi.neural_nets import likelihood_nn
 
 from galstruct.model.simulator import simulator
@@ -44,11 +47,11 @@ from galstruct.torch_prior import Prior
 np.random.seed(1234)
 
 # default parameter values
-_NUM_SIMS = 100000
+_NUM_SIMS = 2**18
 _DENSITY_ESTIMATOR = "maf"
 _HIDDEN_FEATURES = 50
 _TRANSFORM_LAYERS = 5
-_TRAINING_BATCH_SIZE = 50
+_TRAINING_BATCH_SIZE = 2**6
 _RMIN = 1.0
 _RMAX = 25.0
 _RREF = 8.0
@@ -89,6 +92,7 @@ def main(
           ['cauchy', mode, scale]
           ['halfcauchy', scale]
           ['uniform', lower, upper]
+          ['vonmises', location, concentration]
           ['fixed', value]
       density_estimator :: string
         Density estimator for neural network. Either 'maf' for
@@ -151,7 +155,11 @@ def main(
     else:
         raise ValueError("Invalid density estimator: {0}".format(density_estimator))
     print("Learning likelihood with {0} density estimator".format(de))
-    print("{0} hidden features, and {1} transform layers.".format(hidden_features, transform_layers))
+    print(
+        "{0} hidden features, and {1} transform layers.".format(
+            hidden_features, transform_layers
+        )
+    )
     density_estimator_build_fun = likelihood_nn(
         model=density_estimator,
         hidden_features=hidden_features,
@@ -167,8 +175,6 @@ def main(
     # Sample prior
     print("Sampling prior...")
     theta = prior.sample((num_sims,))
-    print(theta.shape)
-    print(fixed)
 
     # Simulate
     print("Simulating...")
@@ -181,7 +187,9 @@ def main(
     # Train
     print("Training with batch size: {0}".format(training_batch_size))
     print()
-    density_estimator = inference.append_simulations(theta, x).train(training_batch_size=training_batch_size)
+    density_estimator = inference.append_simulations(theta, x).train(
+        training_batch_size=training_batch_size
+    )
     posterior = inference.build_posterior(density_estimator)
     print()
 
@@ -204,7 +212,9 @@ if __name__ == "__main__":
         prog="learn_likelihood.py",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    PARSER.add_argument("outfile", type=str, help="Where the neural network is stored (.pkl extension)")
+    PARSER.add_argument(
+        "outfile", type=str, help="Where the neural network is stored (.pkl extension)"
+    )
     PARSER.add_argument(
         "-n",
         "--nsims",
@@ -236,8 +246,12 @@ if __name__ == "__main__":
         default=_TRAINING_BATCH_SIZE,
         help="Batch size for training",
     )
-    PARSER.add_argument("--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)")
-    PARSER.add_argument("--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)")
+    PARSER.add_argument(
+        "--Rmin", type=float, default=_RMIN, help="Minimum Galactocentric radius (kpc)"
+    )
+    PARSER.add_argument(
+        "--Rmax", type=float, default=_RMAX, help="Maximum Galactocentric radius (kpc)"
+    )
     PARSER.add_argument(
         "--Rref",
         type=float,
@@ -245,8 +259,8 @@ if __name__ == "__main__":
         help="Reference Galactocentric radius (kpc)",
     )
     DEFAULT_PRIORS = [
-        ["az0", "uniform", -np.pi, np.pi],
-        ["pitch", "uniform", 0.1, 0.6],
+        ["az0", "vonmises", -np.pi, np.pi],
+        ["pitch", "gamma", 3.0, 10.0],
         ["sigmaV", "halfnormal", 10.0],
         ["sigma_arm_plane", "halfnormal", 1.0],
         ["sigma_arm_height", "halfnormal", 0.1],
@@ -261,7 +275,7 @@ if __name__ == "__main__":
         ["Zsun", "normal", 5.5, 10.0],
         ["roll", "normal", 0.0, 0.05],
         ["warp_amp", "halfnormal", 0.05],
-        ["warp_off", "normal", -0.5, 1.0],
+        ["warp_off", "vonmises", -0.5, 5.0],
     ]
     PARSER.add_argument(
         "--prior",
@@ -270,7 +284,7 @@ if __name__ == "__main__":
         default=DEFAULT_PRIORS,
         help=(
             "Priors on model parameters (e.g., --prior R0 normal 8.5 0.5 "
-            + "--prior az0 uniform 0.0 6.3 --prior sigmaV halfnormal 10.0)"
+            + "--prior az0 vonmises -3.1416 3.1416 --prior sigmaV halfnormal 10.0)"
         ),
     )
 
@@ -279,9 +293,14 @@ if __name__ == "__main__":
         action="append",
         nargs="+",
         default=[],
-        help=("Fixed parameter names followed by their fixed value " + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"),
+        help=(
+            "Fixed parameter names followed by their fixed value "
+            + "(e.g., --fixed R0 8.5 --fixed Usun 10.5)"
+        ),
     )
-    PARSER.add_argument("--overwrite", action="store_true", help="Overwrite existing outfile")
+    PARSER.add_argument(
+        "--overwrite", action="store_true", help="Overwrite existing outfile"
+    )
     ARGS = vars(PARSER.parse_args())
 
     # Generate priors dictionary

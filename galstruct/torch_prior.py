@@ -51,6 +51,7 @@ class Prior:
               ['cauchy', mode, scale]
               ['halfcauchy', scale]
               ['uniform', lower, upper]
+              ['vonmises', loc, scale]
               ['fixed', value]
 
         Returns: prior
@@ -84,6 +85,10 @@ class Prior:
                 continue
             if priors[name][0] == "uniform":
                 self.priors.append(dist.Uniform(priors[name][1], priors[name][2]))
+            elif priors[name][0] == "vonmises":
+                self.priors.append(dist.VonMises(priors[name][1], priors[name][2]))
+            elif priors[name][0] == "gamma":
+                self.priors.append(dist.Gamma(priors[name][1], priors[name][2]))
             elif priors[name][0] == "normal":
                 self.priors.append(dist.Normal(priors[name][1], priors[name][2]))
             elif priors[name][0] == "cauchy":
@@ -93,7 +98,9 @@ class Prior:
             elif priors[name][0] == "halfcauchy":
                 self.priors.append(dist.HalfCauchy(priors[name][1]))
             else:
-                raise ValueError("Invalid prior type {0} for {1}".format(priors[name][0], name))
+                raise ValueError(
+                    "Invalid prior type {0} for {1}".format(priors[name][0], name)
+                )
 
     def sample(self, sample_shape=()):
         """
@@ -133,7 +140,11 @@ class Prior:
         if value.ndim > 1:
             log_p = tt.empty(value.shape[0])
             for i, val in enumerate(value):
-                log_p[i] = tt.sum(tt.tensor([p.log_prob(v) for p, v in zip(self.priors, val)]))
+                log_p[i] = tt.sum(
+                    tt.tensor([p.log_prob(v) for p, v in zip(self.priors, val)])
+                )
         else:
-            log_p = tt.sum(tt.tensor([p.log_prob(v) for p, v in zip(self.priors, value)]))
+            log_p = tt.sum(
+                tt.tensor([p.log_prob(v) for p, v in zip(self.priors, value)])
+            )
         return log_p
