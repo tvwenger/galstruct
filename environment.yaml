@@ -5,5 +5,6 @@ channels:
 dependencies:
   - pip
   - cxx-compiler
+  - fortran-compiler
   - pymc
   - pytensor

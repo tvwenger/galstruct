@@ -1,5 +1,8 @@
 FROM continuumio/miniconda3:latest
 
+RUN apt-get update
+RUN apt-get -y install build-essential
+
 COPY environment.yaml /environment.yaml
 RUN conda env create -f /environment.yaml
 ENV PATH /opt/conda/envs/galstruct/bin:$PATH
