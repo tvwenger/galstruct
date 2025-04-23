@@ -1,7 +1,7 @@
 FROM continuumio/miniconda3:latest
 
 RUN apt-get update
-RUN apt-get -y install build-essential
+RUN apt-get -y install build-essential pkg-config libopenblas-dev
 
 COPY environment.yaml /environment.yaml
 RUN conda env create -f /environment.yaml

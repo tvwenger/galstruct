@@ -5,6 +5,7 @@ channels:
 dependencies:
   - pip
   - cxx-compiler
-  - fortran-compiler
+  - numpy==1.26.4
+  - scipy==1.12.0
   - pymc
   - pytensor

@@ -18,4 +18,3 @@ python learn_likelihood.py \
     --fixed roll 0.0 \
     --overwrite \
     nn.pkl
-    

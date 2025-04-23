@@ -53,7 +53,7 @@ _HIDDEN_FEATURES = 50
 _TRANSFORM_LAYERS = 5
 _TRAINING_BATCH_SIZE = 2**6
 _RMIN = 1.0
-_RMAX = 25.0
+_RMAX = 15.0
 _RREF = 8.0
 _FIXED = {}
 _OVERWRITE = False
@@ -259,7 +259,7 @@ if __name__ == "__main__":
         help="Reference Galactocentric radius (kpc)",
     )
     DEFAULT_PRIORS = [
-        ["az0", "vonmises", -np.pi, np.pi],
+        ["az0", "vonmises", 0.0, 0.01],
         ["pitch", "gamma", 3.0, 10.0],
         ["sigmaV", "halfnormal", 10.0],
         ["sigma_arm_plane", "halfnormal", 1.0],
