@@ -63,7 +63,7 @@ def main(
     net_fname,
     num_sims=10000,
     Rmin=1.0,
-    Rmax=25.0,
+    Rmax=15.0,
     Rref=8.0,
     fixed={},
     disk=[35.0, 4.5, 2.75],

@@ -50,6 +50,7 @@ pytensor.config.floatX = "float32"
 import torch
 import pymc as pm
 from pymc.variational.callbacks import CheckParametersConvergence
+from pymc.distributions.transforms import Ordered
 
 from galstruct.model.simulator import simulator
 
@@ -98,9 +99,10 @@ _disk_params = [35.0, 3.0, 2.5]
 # default parameter values
 _NUM_DATA = 2000
 _RMIN = 1.0
-_RMAX = 25.0
+_RMAX = 15.0
 _RREF = 8.0
 _NUM_SPIRALS = 4
+_INIT = "auto"
 _NITER = 1_000
 _NTUNE = 1_000
 _NINIT = 100_000
@@ -124,6 +126,7 @@ def main(
     Rmax=_RMAX,
     Rref=_RREF,
     num_spirals=_NUM_SPIRALS,
+    init=_INIT,
     niter=_NITER,
     ntune=_NTUNE,
     ninit=_NINIT,
@@ -177,6 +180,8 @@ def main(
         The radius where the arm crosses the reference azimuth
       num_spirals :: integer
         The number of spirals
+      init :: str
+        MCMC initialization method
       niter :: integer
         Number of MCMC iterations per chain
       ntune :: integer
@@ -297,6 +302,14 @@ def main(
                     mu=mu.astype(np.float32),
                     kappa=kappa.astype(np.float32),
                     dims=dims,
+                    transform=Ordered() if param == "az0" else None,
+                    initval=(
+                        (np.arange(num_spirals) * np.pi / num_spirals).astype(
+                            np.float32
+                        )
+                        if param == "az0"
+                        else None
+                    ),
                 )
             elif priors[param][0] == "normal":
                 mean = np.array(priors[param][1 : 2 * num + 1 : 2])
@@ -366,10 +379,7 @@ def main(
         else:
             trace = pm.sample(
                 niter,
-                # init="auto",
-                # init="advi+adapt_diag",
-                init="adapt_diag",
-                # init="advi+adapt_diag",
+                init=init,
                 tune=ntune,
                 n_init=ninit,
                 cores=num_chains,
@@ -477,7 +487,7 @@ if __name__ == "__main__":
         ["Zsun", "normal", 5.5, 10.0],
         ["roll", "normal", 0.0, 0.05],
         ["warp_amp", "halfnormal", 0.05],
-        ["warp_off", "normal", -0.5, 1.0],
+        ["warp_off", "vonmises", -0.5, 1.0],
     ]
     PARSER.add_argument(
         "--prior",
@@ -495,6 +505,9 @@ if __name__ == "__main__":
         nargs="+",
         default=[],
         help=("Fixed GRM parameter names followed by their fixed value."),
+    )
+    PARSER.add_argument(
+        "--init", type=str, default=_INIT, help="MCMC initialization strategy"
     )
     PARSER.add_argument(
         "--chains", type=int, default=_NUM_CHAINS, help="Number of Markov chains"
@@ -573,6 +586,7 @@ if __name__ == "__main__":
         Rmax=ARGS["Rmax"],
         Rref=ARGS["Rref"],
         num_spirals=ARGS["num_spirals"],
+        init=ARGS["init"],
         niter=ARGS["niter"],
         ntune=ARGS["ntune"],
         ninit=ARGS["ninit"],

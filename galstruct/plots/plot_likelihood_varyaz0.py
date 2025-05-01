@@ -89,7 +89,7 @@ def main(
     theta=_THETA,
     outdir="frames",
     Rmin=1.0,
-    Rmax=25.0,
+    Rmax=15.0,
     Rref=8.0,
     fixed={},
 ):
@@ -136,7 +136,7 @@ def main(
     # add az0 placeholder to theta. Get range of az0
     like_theta = tt.tensor([0.0] + like_theta)
     all_theta = tt.tensor([0.0] + all_theta)
-    az0s_deg = np.linspace(0.0, 359.0, 36)
+    az0s_deg = np.linspace(-180.0, 180.0, 36)
     az0s = np.deg2rad(az0s_deg)
 
     # Load neural network

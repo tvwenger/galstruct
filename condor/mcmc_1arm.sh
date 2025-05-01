@@ -15,7 +15,12 @@ PYTENSOR_FLAGS="base_compiledir=$tmpdir" python mcmc_posterior.py \
     --num_spirals 1 \
     --fixed q 1.0 \
     --fixed R0 8.15 \
+    --fixed Usun 10.6 \
+    --fixed Vsun 10.7 \
+    --fixed Wsun 7.6 \
     --fixed Upec 6.0 \
-    --fixed Vpec 0.0 \
+    --fixed Vpec -4.3 \
+    --fixed a2 0.96 \
+    --fixed a3 1.62 \
     --fixed Zsun 5.5 \
     --fixed roll 0.0

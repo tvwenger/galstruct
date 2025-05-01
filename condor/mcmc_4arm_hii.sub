@@ -2,7 +2,7 @@
 # Sample posterior with MCMC using real HII region data
 
 requirements = (HasCHTCStaging == true)
-container_image = file:///staging/twenger2/galstruct-v1.0.4.sif
+container_image = file:///staging/twenger2/galstruct-v1.0.6.sif
 +LongJob = true
 
 # Executable
@@ -19,9 +19,11 @@ transfer_output_remaps = "mcmc.pkl = /home/twenger2/galstruct/mcmc_$(net)_4arm_h
 log = /home/twenger2/galstruct/logs/mcmc_$(net)_4arm_hii_$(Cluster)_$(Process).log
 error = /home/twenger2/galstruct/logs/mcmc_$(net)_4arm_hii_$(Cluster)_$(Process).err
 output = /home/twenger2/galstruct/logs/mcmc_$(net)_4arm_hii_$(Cluster)_$(Process).out
+stream_output = True
+stream_error = True
 
 # Resource request
-request_cpus = 12
+request_cpus = 8
 request_memory = 16GB
 request_disk = 64GB
 
