@@ -5,6 +5,7 @@ PYTENSOR_FLAGS="base_compiledir=$tmpdir" python mcmc_posterior.py \
     hii_data_sub.csv \
     mcmc.pkl \
     $1 \
+    --init advi+adapt_diag \
     -n 1_000 \
     --chains 8 \
     --ntune 1_000 \
