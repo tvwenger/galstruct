@@ -330,6 +330,20 @@ def main(
                     mean + sigma * determ[f"{param}_norm"],
                     dims=dims,
                 )
+            elif priors[param][0] == "gamma":
+                alpha = np.array(priors[param][1 : 2 * num + 1 : 2])
+                beta = np.array(priors[param][2 : 2 * num + 1 : 2])
+                if len(shape) == 0:
+                    alpha = alpha[0]
+                    beta = beta[0]
+                alpha = alpha.astype(np.float32)
+                beta = beta.astype(np.float32)
+                determ[param] = pm.Gamma(
+                    param,
+                    alpha=alpha,
+                    beta=beta,
+                    dims=dims,
+                )
             elif priors[param][0] == "halfnormal":
                 sigma = np.array(priors[param][1 : num + 1])
                 if len(shape) == 0:
@@ -472,9 +486,9 @@ if __name__ == "__main__":
     DEFAULT_PRIORS = [
         ["q", "dirichlet", 5.0],
         ["az0", "vonmises", 0.0, 0.01, 0.0, 0.01, 0.0, 0.01, 0.0, 0.01],
-        ["pitch", "uniform", 0.1, 0.6, 0.1, 0.6, 0.1, 0.6, 0.1, 0.6],
+        ["pitch", "gamma", 3.0, 10.0, 3.0, 10.0, 3.0, 10.0, 3.0, 10.0],
         ["sigmaV", "halfnormal", 10.0],
-        ["sigma_arm_plane", "halfnormal", 1.0],
+        ["sigma_arm_plane", "halfnormal", 0.25],
         ["sigma_arm_height", "halfnormal", 0.1],
         ["R0", "normal", 8.5, 0.5],
         ["Usun", "normal", 10.5, 1.0],
