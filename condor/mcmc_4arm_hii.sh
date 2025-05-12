@@ -20,5 +20,5 @@ PYTENSOR_FLAGS="base_compiledir=$tmpdir" python mcmc_posterior.py \
     --fixed a2 0.96 \
     --fixed a3 1.62 \
     --fixed Zsun 5.5 \
-    --fixed roll 0.0 \ 
+    --fixed roll 0.0 \
     --prior pitch uniform 0.1 0.6 0.1 0.6 0.1 0.6 0.1 0.6 
