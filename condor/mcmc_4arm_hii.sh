@@ -5,7 +5,7 @@ PYTENSOR_FLAGS="base_compiledir=$tmpdir" python mcmc_posterior.py \
     hii_data_sub.csv \
     mcmc.pkl \
     $1 \
-    --init advi+adapt_diag \
+    --init "advi+adapt_diag" \
     -n 1_000 \
     --chains 8 \
     --ntune 1_000 \
@@ -20,4 +20,5 @@ PYTENSOR_FLAGS="base_compiledir=$tmpdir" python mcmc_posterior.py \
     --fixed a2 0.96 \
     --fixed a3 1.62 \
     --fixed Zsun 5.5 \
-    --fixed roll 0.0
+    --fixed roll 0.0 \ 
+    --prior pitch uniform 0.1 0.6 0.1 0.6 0.1 0.6 0.1 0.6 
