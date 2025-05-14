@@ -2,7 +2,7 @@
 
 tmpdir=`mktemp -d`
 PYTENSOR_FLAGS="base_compiledir=$tmpdir" python mcmc_posterior.py \
-    hii_data_sub.csv \
+    hii_data_sub2.csv \
     mcmc.pkl \
     $1 \
     --init "advi+adapt_diag" \
